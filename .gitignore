@@ -6,9 +6,7 @@ __pycache__/
 .ipynb_checkpoints/
 app/data/raw/*
 app/data/processed/*
-app/models/*
 !app/data/raw/.gitkeep
 !app/data/processed/.gitkeep
-!app/models/.gitkeep
 node_modules/
 *.cache
