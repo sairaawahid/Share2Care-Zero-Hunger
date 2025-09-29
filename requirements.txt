@@ -1,0 +1,15 @@
+streamlit
+pandas
+geopandas
+folium
+shapely
+pyproj
+requests
+transformers
+torch
+torchvision
+pmdarima
+prophet
+scikit-learn
+streamlit-folium
+matplotlib
