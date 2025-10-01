@@ -13,9 +13,7 @@ from app.backend.config import IMGNET_LABELS_JSON
 # -----------------------------
 _device = torch.device("cpu")
 
-# Lightweight MobileNetV2
 _model = models.mobilenet_v2(pretrained=True)
-_model.classifier[1] = nn.Identity()  # keep embeddings if needed
 _model.eval()
 
 # Transformation pipeline (match ImageNet training)
@@ -30,7 +28,6 @@ _transform = T.Compose([
 # -----------------------------
 # ImageNet Labels
 # -----------------------------
-# Download from torchvision if not available
 if not Path(IMGNET_LABELS_JSON).exists():
     import urllib.request
     labels_url = "https://raw.githubusercontent.com/pytorch/hub/master/imagenet_classes.txt"
@@ -41,18 +38,42 @@ with open(IMGNET_LABELS_JSON) as f:
     idx_to_label = [line.strip() for line in f.readlines()]
 
 # -----------------------------
+# Food Keywords for Filtering
+# -----------------------------
+FOOD_KEYWORDS = [
+    "dish", "food", "drink", "bread", "cake", "pizza", "burger", "sandwich",
+    "soup", "noodle", "pasta", "rice", "fruit", "vegetable", "salad",
+    "egg", "cheese", "meat", "fish", "chicken", "beef", "pork", "lamb",
+    "seafood", "bean", "nut", "potato", "tomato", "carrot", "onion",
+    "ice cream", "dessert", "milk", "coffee", "tea", "juice", "bottle"
+]
+
+def _is_food_label(label: str) -> bool:
+    l = label.lower()
+    return any(keyword in l for keyword in FOOD_KEYWORDS)
+
+# -----------------------------
 # Main Function
 # -----------------------------
 def tag_food_image(img: Image.Image, topk: int = 3):
-    """Classify a food image using MobileNetV2 and return top-k predictions."""
+    """Classify a food image using MobileNetV2 and return top-k likely food predictions."""
     try:
         inp = _transform(img).unsqueeze(0).to(_device)
         with torch.no_grad():
-            logits = models.mobilenet_v2(pretrained=True)(inp)  # fresh model call for safety
+            logits = _model(inp)
             probs = torch.nn.functional.softmax(logits[0], dim=0)
 
-        top_probs, top_idxs = probs.topk(topk)
+        # Get top-N broader set, then filter for food
+        top_probs, top_idxs = probs.topk(50)
         results = [(idx_to_label[idx], float(prob)) for idx, prob in zip(top_idxs, top_probs)]
-        return results
+
+        # Keep only likely food labels
+        food_results = [(lbl, prob) for lbl, prob in results if _is_food_label(lbl)]
+
+        # Return top-k food predictions
+        if food_results:
+            return food_results[:topk]
+        else:
+            return [("No food detected", 0.0)]
     except Exception as e:
         return [("Error", str(e))]
