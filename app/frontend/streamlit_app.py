@@ -11,6 +11,9 @@ from app.backend.config import (
 )
 from app.backend.data_loader import load_wfp_prices
 from app.backend.models.price_forecast import forecast_prices
+from app.backend.models.image_tagging import tag_food_image
+import PIL.Image as Image
+
 
 # -----------------------------
 # PAGE CONFIG
@@ -30,7 +33,7 @@ st.markdown(
 # -----------------------------
 # NAVIGATION
 # -----------------------------
-tabs = st.tabs(["🗺️ Map View", "📊 Prices & Forecast", "💚 Psychology Layer"])
+tabs = st.tabs(["🗺️ Map View", "📊 Prices & Forecast", "💚 Psychology Layer", "🍲 Food Recognition"])
 
 # -----------------------------
 # TAB 1: MAP VIEW
@@ -127,3 +130,24 @@ with tabs[2]:
             st.info("Stay balanced, your efforts still matter! 🌱")
         else:
             st.warning("It's okay to feel low—helping others might lift you too 💫")
+
+# -----------------------------
+# TAB 4: FOOD IMAGE TAGGING
+# -----------------------------
+with tabs[3]:
+    st.subheader("🍲 Food Recognition")
+
+    st.markdown("Upload a food photo and the app will auto-tag it using MobileNet.")
+
+    uploaded = st.file_uploader("Upload a food image", type=["jpg","jpeg","png"])
+    if uploaded:
+        img = Image.open(uploaded).convert("RGB")
+        st.image(img, caption="Uploaded Image", use_column_width=True)
+
+        try:
+            labels = tag_food_image(img, topk=3)
+            st.success("✅ Detected Food Items:")
+            for lbl, prob in labels:
+                st.write(f"- **{lbl}** ({prob:.2f} confidence)")
+        except Exception as e:
+            st.error(f"❌ Could not tag image: {e}")
