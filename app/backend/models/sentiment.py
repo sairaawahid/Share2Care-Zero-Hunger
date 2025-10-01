@@ -1,10 +1,20 @@
 from transformers import pipeline
 
-# small, fast default (English)
-_sentiment = pipeline("sentiment-analysis")
+# Explicitly pin the model + revision so no warnings appear in production
+MODEL_NAME = "distilbert/distilbert-base-uncased-finetuned-sst-2-english"
+MODEL_REVISION = "714eb0f"  # stable revision hash from Hugging Face
 
-def analyze_text(text: str):
+# Load once (cached in memory)
+_sentiment = pipeline(
+    "sentiment-analysis",
+    model=MODEL_NAME,
+    revision=MODEL_REVISION,
+    device=-1   # force CPU (works on Streamlit Cloud)
+)
+
+def analyze_sentiment(text: str):
+    """Return positive/neutral/negative score for a given text."""
     if not text or not text.strip():
-        return {"label":"NEUTRAL","score":0.0}
-    res = _sentiment(text[:512])[0]
-    return {"label": res["label"], "score": float(res["score"])}
+        return {"label": "EMPTY", "score": 0.0}
+    result = _sentiment(text[:512])[0]  # limit length
+    return {"label": result["label"], "score": float(result["score"])}
