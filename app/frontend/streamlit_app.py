@@ -13,6 +13,8 @@ from app.backend.data_loader import load_wfp_prices
 from app.backend.models.price_forecast import forecast_prices
 from app.backend.models.image_tagging import tag_food_image
 import PIL.Image as Image
+from app.backend.models.sentiment import analyze_sentiment
+
 
 
 # -----------------------------
@@ -33,7 +35,14 @@ st.markdown(
 # -----------------------------
 # NAVIGATION
 # -----------------------------
-tabs = st.tabs(["🗺️ Map View", "📊 Prices & Forecast", "💚 Psychology Layer", "🍲 Food Recognition"])
+tabs = st.tabs([
+    "🗺️ Map View",
+    "📊 Prices & Forecast",
+    "💚 Psychology Layer",
+    "🍲 Food Recognition",
+    "📝 Sentiment Analysis"
+])
+
 
 # -----------------------------
 # TAB 1: MAP VIEW
@@ -120,16 +129,25 @@ with tabs[2]:
     if st.button("🔔 Remind me to share surplus food"):
         st.info("We’ll keep nudging you each time you open this app 🚀")
 
-    # Mood reflection
-    mood = st.radio("How are you feeling today?", ["😊 Good", "😐 Okay", "😔 Low"])
-    if mood:
-        st.write(f"Logged your mood: {mood}")
-        if mood == "😊 Good":
-            st.success("Keep spreading positivity! 💚")
-        elif mood == "😐 Okay":
-            st.info("Stay balanced, your efforts still matter! 🌱")
+    # Mood reflection (AI-assisted)
+    st.markdown("### 📝 Mood Reflection (AI-assisted)")
+    note = st.text_area("Write how you're feeling today:")
+
+    if st.button("Analyze Mood"):
+        if note.strip():
+            res = analyze_sentiment(note)
+            label, score = res["label"], res["score"]
+            
+            st.write(f"Your note: *{note}*")
+            if label == "POSITIVE":
+                st.success(f"😊 Positive Mood ({score:.2f}) — Keep spreading positivity! 💚")
+            elif label == "NEGATIVE":
+                st.warning(f"😔 Low Mood ({score:.2f}) — It's okay to feel low; helping others might lift you too 💫")
+            else:
+                st.info(f"😐 Neutral Mood ({score:.2f}) — Stay balanced, your efforts still matter 🌱")
         else:
-            st.warning("It's okay to feel low—helping others might lift you too 💫")
+            st.warning("⚠️ Please write something about your mood.")
+
 
 # -----------------------------
 # TAB 4: FOOD IMAGE TAGGING
@@ -157,3 +175,28 @@ with tabs[3]:
                     st.write(f"- **{lbl}** ({prob:.2f} confidence)")
         except Exception as e:
             st.error(f"❌ Could not tag image: {e}")
+
+# -----------------------------
+# TAB 5: SENTIMENT ANALYSIS
+# -----------------------------
+with tabs[4]:
+    st.subheader("📝 Donor Note Sentiment Analysis")
+
+    st.markdown("Write a short note about your pledge or how you feel, and AI will analyze it instantly.")
+
+    note = st.text_area("✍️ Enter your reflection here:")
+
+    if st.button("Analyze Sentiment"):
+        if note.strip():
+            res = analyze_sentiment(note)
+            label = res["label"]
+            score = res["score"]
+
+            if label == "POSITIVE":
+                st.success(f"😊 Positive ({score:.2f})")
+            elif label == "NEGATIVE":
+                st.error(f"😔 Negative ({score:.2f})")
+            else:
+                st.info(f"😐 Neutral/Other ({score:.2f})")
+        else:
+            st.warning("⚠️ Please enter some text first.")
