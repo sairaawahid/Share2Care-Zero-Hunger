@@ -144,10 +144,16 @@ with tabs[3]:
         img = Image.open(uploaded).convert("RGB")
         st.image(img, caption="Uploaded Image", use_column_width=True)
 
-        try:
-            labels = tag_food_image(img, topk=3)
-            st.success("✅ Detected Food Items:")
-            for lbl, prob in labels:
-                st.write(f"- **{lbl}** ({prob:.2f} confidence)")
+       try:
+           labels = tag_food_image(img, topk=3)
+
+            if labels and labels[0][0] == "No food detected":
+                st.warning("⚠️ No food items detected in this image. Try another photo with clearer food content.")
+            elif labels and labels[0][0] == "Error":
+                st.error(f"❌ Error during recognition: {labels[0][1]}")
+            else:
+                st.success("✅ Detected Food Items:")
+                for lbl, prob in labels:
+                    st.write(f"- **{lbl}** ({prob:.2f} confidence)")
         except Exception as e:
             st.error(f"❌ Could not tag image: {e}")
