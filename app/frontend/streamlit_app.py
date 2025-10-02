@@ -161,9 +161,9 @@ with tabs[3]:
     if uploaded:
         img = Image.open(uploaded).convert("RGB")
         st.image(img, caption="Uploaded Image", use_column_width=True)
-
-       try:
-           labels = tag_food_image(img, topk=3)
+        
+        try:
+            labels = tag_food_image(img, topk=3)
 
             if labels and labels[0][0] == "No food detected":
                 st.warning("⚠️ No food items detected in this image. Try another photo with clearer food content.")
