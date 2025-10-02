@@ -1,17 +1,18 @@
-numpy
-statsmodels
+# Core app
 streamlit
-pandas
-geopandas
+
+# Mapping
 folium
-shapely
-pyproj
-requests
-transformers
+streamlit-folium
+
+# Image processing and recognition
 torch
 torchvision
-pmdarima
-prophet
-scikit-learn
-streamlit-folium
-matplotlib
+Pillow
+numpy
+
+# NLP (sentiment analysis)
+transformers
+
+# Optional utilities
+pandas
