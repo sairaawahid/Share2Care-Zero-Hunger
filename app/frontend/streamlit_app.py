@@ -1,8 +1,10 @@
 import sys
 import os
 
-# ✅ Ensure the correct working directory is in sys.path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# ✅ Ensure repo root is always in sys.path (works locally & on Streamlit Cloud)
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
 
 import streamlit as st
 import folium
