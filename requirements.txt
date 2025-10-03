@@ -1,4 +1,3 @@
-# Core
 streamlit
 pandas
 numpy==1.26.4
@@ -7,18 +6,15 @@ matplotlib
 folium
 streamlit-folium
 Pillow
-# NLP Models
 transformers
 torch
 scikit-learn
-# Geospatial
 geopandas
 shapely
 pyproj
 fiona
 rtree
-# Forecasting
 Cython==0.29.36
-statsmodels==0.14.2   # ✅ guaranteed fallback
-pmdarima==2.0.4       # ⚠️ optional, may fail on Streamlit Cloud
-prophet==1.1.5        # ⚠️ optional, heavy dependency
+pmdarima==2.0.4
+prophet==1.1.5
+statsmodels==0.14.2
