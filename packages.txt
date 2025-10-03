@@ -3,7 +3,6 @@ build-essential
 python3-dev
 gfortran
 libatlas-base-dev
-
 # Geo stack (for geopandas, shapely, fiona, pyproj, rtree)
 libgeos-dev
 libproj-dev
@@ -12,6 +11,5 @@ proj-bin
 gdal-bin
 libgdal-dev
 libspatialindex-dev
-
 # Prophet / Statsmodels dependencies
 libstdc++6
