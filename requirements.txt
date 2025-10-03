@@ -1,22 +1,22 @@
-# Core app
 streamlit
 
-# Mapping
 folium
 streamlit-folium
 
-# Image processing and recognition
 torch
 torchvision
 Pillow
 numpy
 
-# NLP (sentiment analysis)
 transformers
 
-# Optional utilities
 pandas
 matplotlib
 scikit-learn
 pandas
-numpy
+
+geopandas
+shapely
+pyproj
+fiona
+rtree
