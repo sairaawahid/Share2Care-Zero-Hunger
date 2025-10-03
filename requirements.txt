@@ -22,4 +22,4 @@ rtree
 
 # Forecasting
 pmdarima==2.0.4
-prophet
+prophet==1.1.5
