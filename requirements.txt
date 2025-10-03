@@ -1,22 +1,24 @@
+# Core
 streamlit
-
+pandas
+numpy
+matplotlib
 folium
 streamlit-folium
-
-torch
-torchvision
 Pillow
-numpy
 
+# NLP Models
 transformers
-
-pandas
-matplotlib
+torch
 scikit-learn
-pandas
 
+# Geospatial
 geopandas
 shapely
 pyproj
 fiona
 rtree
+
+# Forecasting
+pmdarima
+prophet
