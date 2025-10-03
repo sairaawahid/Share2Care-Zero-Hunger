@@ -1,3 +1,4 @@
+--only-binary=:all:
 streamlit
 pandas
 numpy==1.26.4
