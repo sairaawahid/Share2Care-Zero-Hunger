@@ -9,10 +9,10 @@ Pillow
 transformers
 torch
 scikit-learn
-geopandas
-shapely
-pyproj
-fiona
+geopandas==0.14.4
+shapely==2.0.4
+pyproj==3.6.1
+fiona==1.9.6
 rtree
 Cython==0.29.36
 pmdarima==2.0.4
