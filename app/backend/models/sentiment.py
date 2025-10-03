@@ -1,6 +1,5 @@
 from transformers import pipeline
 
-# Explicitly pin the model + revision so no warnings appear in production
 MODEL_NAME = "distilbert/distilbert-base-uncased-finetuned-sst-2-english"
 MODEL_REVISION = "714eb0f"  # stable revision hash from Hugging Face
 
