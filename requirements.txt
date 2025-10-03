@@ -22,5 +22,6 @@ rtree
 
 # Forecasting
 Cython==0.29.36
-pmdarima==2.0.4
-prophet==1.1.5
+statsmodels==0.14.2   # ✅ guaranteed fallback
+pmdarima==2.0.4       # ⚠️ optional, may fail on Streamlit Cloud
+prophet==1.1.5        # ⚠️ optional, heavy dependency
