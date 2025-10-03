@@ -8,10 +8,10 @@ DATA_PROC   = PROJECT_DIR / "app" / "data" / "processed"
 MODELS_DIR  = PROJECT_DIR / "app" / "models"
 
 # ---- Required Raw Data ----
-# Pakistan Administrative Boundaries (folder containing adm0/1/2 shapefiles)
+# Pakistan Administrative Boundaries 
 PAK_ADMIN_BOUNDARIES = DATA_RAW / "pak_admin_boundaries"
 
-# OCHA Humanitarian Response – Food Security Cluster & 5W (single Excel file)
+# OCHA Humanitarian Response – Food Security Cluster & 5W 
 OCHA_5W_FILE = DATA_RAW / "OCHA_PAK_5W.xlsx"
 
 # WFP food-price monitoring (CSV)
