@@ -4,6 +4,5 @@ gfortran
 libatlas-base-dev
 libgeos-dev
 libproj-dev
-gdal-bin
 libspatialindex-dev
 libstdc++6
