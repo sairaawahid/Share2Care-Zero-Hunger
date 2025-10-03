@@ -1,0 +1,16 @@
+Date of analysis,Country,Total country population,Validity period,From,To,Phase,Number,Percentage
+#date+analysis,#country+code,#population,#period+v_ipc,#date+start,#date+end,#severity+v_ipc,#affected+num,#affected+pct
+Nov 2024,PAK,241490000,current,2024-11-01,2025-03-31,all,50788650,1.0
+Nov 2024,PAK,241490000,current,2024-11-01,2025-03-31,3+,10989570,0.22
+Nov 2024,PAK,241490000,current,2024-11-01,2025-03-31,1,23164746,0.46
+Nov 2024,PAK,241490000,current,2024-11-01,2025-03-31,2,16634334,0.32
+Nov 2024,PAK,241490000,current,2024-11-01,2025-03-31,3,9283376,0.19
+Nov 2024,PAK,241490000,current,2024-11-01,2025-03-31,4,1706195,0.03
+Nov 2024,PAK,241490000,current,2024-11-01,2025-03-31,5,0,0
+Nov 2024,PAK,241490000,first projection,2025-04-01,2025-07-31,all,50788650,1.0
+Nov 2024,PAK,241490000,first projection,2025-04-01,2025-07-31,3+,9991810,0.2
+Nov 2024,PAK,241490000,first projection,2025-04-01,2025-07-31,1,23333581,0.46
+Nov 2024,PAK,241490000,first projection,2025-04-01,2025-07-31,2,17463260,0.34
+Nov 2024,PAK,241490000,first projection,2025-04-01,2025-07-31,3,9284135,0.19
+Nov 2024,PAK,241490000,first projection,2025-04-01,2025-07-31,4,707675,0.01
+Nov 2024,PAK,241490000,first projection,2025-04-01,2025-07-31,5,0,0
