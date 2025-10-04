@@ -23,12 +23,9 @@ from app.backend.models.price_forecast import forecast_prices
 from app.backend.models.image_tagging import tag_food_image
 import PIL.Image as Image
 from app.backend.models.sentiment import analyze_sentiment
-from app.backend.workflow import (
-    submit_donation,
-    list_donations,
-    claim_donation,
-    confirm_delivery,
-)
+# --- Donor–NGO Workflow Imports ---
+from app.backend.workflow.donor import submit_donation
+from app.backend.workflow.ngo import view_and_claim_donations
 
 
 
