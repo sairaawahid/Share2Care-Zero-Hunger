@@ -7,6 +7,8 @@ if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
 import streamlit as st
+from datetime import datetime
+import json
 import folium
 from streamlit_folium import st_folium
 import pandas as pd
@@ -28,7 +30,60 @@ from app.backend.models.sentiment import analyze_sentiment
 from app.backend.workflow.donor import submit_donation
 from app.backend.workflow.ngo import view_and_claim_donations, claim_donation
 
+# -------------------------------------------
+# Donor–NGO Workflow Helper Functions
+# -------------------------------------------
+DATA_FILE = "donations.json"
 
+def load_donations():
+    try:
+        with open(DATA_FILE, "r") as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        data = []
+    return data
+
+def save_donations(data):
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+
+def submit_donation(donor_name, contact, location, food_desc, mood, food_img):
+    data = load_donations()
+    donation_id = len(data) + 1
+    record = {
+        "donation_id": donation_id,
+        "donor_name": donor_name,
+        "contact": contact,
+        "location": location,
+        "food_desc": food_desc,
+        "mood": mood,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "status": "Available",
+        "claimed_by": None
+    }
+    if food_img:
+        record["food_img"] = food_img.name
+    data.append(record)
+    save_donations(data)
+    return record
+
+def view_donations_df():
+    data = load_donations()
+    if not data:
+        return pd.DataFrame()
+    return pd.DataFrame(data)
+
+def claim_donation(donation_id, ngo_name):
+    data = load_donations()
+    for d in data:
+        if d["donation_id"] == donation_id and d["status"] == "Available":
+            d["status"] = "Claimed"
+            d["claimed_by"] = ngo_name
+            d["claimed_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            save_donations(data)
+            return d
+    return None
+    
 # -----------------------------
 # PAGE CONFIG
 # -----------------------------
@@ -216,6 +271,64 @@ with tabs[4]:
             st.warning("⚠️ Please enter some text first.")
 
 
+import json
+from datetime import datetime
+import pandas as pd
+
+DATA_FILE = "donations.json"
+
+# -----------------------------
+# Helper functions
+# -----------------------------
+def load_donations():
+    try:
+        with open(DATA_FILE, "r") as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        data = []
+    return data
+
+def save_donations(data):
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+
+def submit_donation(donor_name, contact, location, food_desc, mood, food_img):
+    data = load_donations()
+    donation_id = len(data) + 1
+    record = {
+        "donation_id": donation_id,
+        "donor_name": donor_name,
+        "contact": contact,
+        "location": location,
+        "food_desc": food_desc,
+        "mood": mood,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "status": "Available",
+        "claimed_by": None
+    }
+    if food_img:
+        record["food_img"] = food_img.name
+    data.append(record)
+    save_donations(data)
+    return record
+
+def view_donations_df():
+    data = load_donations()
+    if not data:
+        return pd.DataFrame()
+    return pd.DataFrame(data)
+
+def claim_donation(donation_id, ngo_name):
+    data = load_donations()
+    for d in data:
+        if d["donation_id"] == donation_id and d["status"] == "Available":
+            d["status"] = "Claimed"
+            d["claimed_by"] = ngo_name
+            d["claimed_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            save_donations(data)
+            return d
+    return None
+
 # ----------------------------- #
 # TAB 6: DONOR–NGO WORKFLOW
 # ----------------------------- #
@@ -223,17 +336,15 @@ with tabs[5]:
     st.subheader("🤝 Donor–NGO Food Sharing Workflow")
 
     st.markdown("""
-    This section connects **donors** with **NGOs** through a transparent process:
-    - Donors submit available food (with optional image + message)
-    - NGOs view and claim donations
-    - AI provides encouragement and gratitude feedback 🌾
+    This connects **donors** with **NGOs** through a transparent process:
+    - Donors submit available food (with optional image + note)
+    - NGOs view donations and claim them
+    - AI provides encouragement based on donor sentiment 🌱
     """)
 
-    mode = st.radio("Choose your role:", ["Donor", "NGO"], horizontal=True)
+    mode = st.radio("Choose your role:", ["Donor", "NGO"])
 
-    # ------------------------------------------
-    # DONOR SECTION
-    # ------------------------------------------
+    # ---------- DONOR SIDE ----------
     if mode == "Donor":
         st.markdown("### 🍱 Submit a Food Donation")
 
@@ -241,8 +352,8 @@ with tabs[5]:
         contact = st.text_input("Contact Info (email / phone)")
         location = st.text_input("Pickup Location (district or coordinates)")
         food_desc = st.text_area("Describe the Food (e.g., rice, cooked meals, bread)")
-        note = st.text_area("Add a short note or message (optional):")
         food_img = st.file_uploader("Optional: Upload Food Image", type=["jpg", "jpeg", "png"])
+        note = st.text_area("Add a short note or message (optional):")
 
         # --- Sentiment Analysis ---
         mood = None
@@ -253,77 +364,66 @@ with tabs[5]:
         if st.button("🚀 Submit Donation"):
             if donor_name and contact and location and food_desc:
                 result = submit_donation(donor_name, contact, location, food_desc, mood, food_img)
-                if result["status"] == "success":
-                    st.success(f"✅ Donation recorded successfully! ID: {result['donation_id']}")
-                    st.json(result)
+                st.success("✅ Donation submitted successfully!")
+                st.json(result)
 
-                    # --- AI-Driven Encouragement ---
-                    if mood == "POSITIVE":
-                        st.info("💚 You’re spreading hope! Keep donating regularly to make an even bigger impact.")
-                    elif mood == "NEGATIVE":
-                        st.warning("💭 Helping others might lift your spirits too — your kindness truly matters.")
-                    else:
-                        st.info("🌱 Thanks for your support! Every meal counts toward Zero Hunger.")
+                # --- AI-Driven Encouragement ---
+                if mood == "POSITIVE":
+                    st.info("💚 You’re spreading hope! Keep donating regularly to make an even bigger impact.")
+                elif mood == "NEGATIVE":
+                    st.warning("💭 Helping others might lift your spirits too — your kindness truly matters.")
                 else:
-                    st.error(f"❌ Failed to submit donation: {result['message']}")
+                    st.info("🌱 Thanks for your support! Every meal counts toward Zero Hunger.")
             else:
                 st.error("⚠️ Please fill in all required fields.")
 
-    # ------------------------------------------
-    # NGO SECTION
-    # ------------------------------------------
+    # ---------- NGO SIDE ----------
     elif mode == "NGO":
         st.markdown("### 🏢 View and Claim Available Donations")
 
-        df_donations = view_and_claim_donations()
+        df_donations = view_donations_df()
+        available_df = df_donations[df_donations["status"] == "Available"] if not df_donations.empty else pd.DataFrame()
 
-        if df_donations.empty:
+        if available_df.empty:
             st.info("No unclaimed donations available right now.")
         else:
-            st.dataframe(df_donations)
-
-            donation_ids = df_donations["donation_id"].tolist()
-            selected_id = st.selectbox("Select Donation ID to Claim:", donation_ids)
-
+            st.dataframe(available_df)
+            selected_id = st.selectbox("Select Donation ID to Claim:", available_df["donation_id"].tolist())
             ngo_name = st.text_input("Enter your NGO Name")
 
-            if st.button("✅ Claim Selected Donation"):
-                if not ngo_name:
-                    st.warning("⚠️ Please enter your NGO name before claiming.")
-                else:
-                    result = claim_donation(selected_id, ngo_name)
-                    if result["status"] == "success":
-                        st.success(result["message"])
-                        st.info("🔄 Refresh or revisit this tab to see updated donation status.")
+            if st.button("Claim Selected Donation"):
+                if ngo_name.strip():
+                    claimed = claim_donation(selected_id, ngo_name)
+                    if claimed:
+                        st.success(f"✅ Donation ID {selected_id} has been claimed by {ngo_name}!")
                     else:
-                        st.error(f"❌ Error: {result['message']}")
+                        st.warning("⚠️ That donation may have already been claimed.")
+                else:
+                    st.error("Please enter your NGO name before claiming.")
 
-
-# -----------------------------
+# ----------------------------- #
 # TAB 7: NGO DASHBOARD
-# -----------------------------
+# ----------------------------- #
 with tabs[6]:
-    st.subheader("🤝 NGO Dashboard")
+    st.subheader("📊 NGO Dashboard — Donation Status Overview")
 
-    st.markdown("View and claim available food donations submitted by donors.")
+    df = view_donations_df()
 
-    data = view_and_claim_donations()
-
-    if data.empty:
-        st.info("No donations available yet.")
+    if df.empty:
+        st.info("No donations submitted yet.")
     else:
-        st.dataframe(data)
+        st.dataframe(df)
 
-        selected_index = st.number_input(
-            "Enter the index of the donation to claim:", min_value=0, max_value=len(data)-1, step=1
-        )
+        st.markdown("### 🔍 Filter by Status")
+        filter_option = st.selectbox("Select Status", ["All", "Available", "Claimed"])
+        if filter_option != "All":
+            df = df[df["status"] == filter_option]
 
-        ngo_name = st.text_input("Your NGO Name")
-        contact = st.text_input("Contact Info")
+        st.dataframe(df)
 
-        if st.button("✅ Claim Donation"):
-            row = data.iloc[int(selected_index)]
-            st.success(f"{ngo_name} has successfully claimed donation from {row['donor_name']}!")
-
-            # --- Positive Feedback for Donor (AI-Nudge simulation) ---
-            st.info(f"📢 Feedback sent: ‘Thank you, {row['donor_name']}! Your food is now helping a community in need.’")
+        st.markdown("### 🏢 Claimed Donations Summary")
+        claimed_df = df[df["status"] == "Claimed"]
+        if claimed_df.empty:
+            st.info("No donations have been claimed yet.")
+        else:
+            st.table(claimed_df[["donation_id", "donor_name", "claimed_by", "claimed_at", "food_desc"]])
