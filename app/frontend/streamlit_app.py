@@ -1,7 +1,7 @@
 import sys
 import os
 
-# ✅ Ensure repo root is always in sys.path (works locally & on Streamlit Cloud)
+# Ensure repo root is always in sys.path
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
@@ -23,6 +23,12 @@ from app.backend.models.price_forecast import forecast_prices
 from app.backend.models.image_tagging import tag_food_image
 import PIL.Image as Image
 from app.backend.models.sentiment import analyze_sentiment
+from app.backend.workflow import (
+    submit_donation,
+    list_donations,
+    claim_donation,
+    confirm_delivery,
+)
 
 
 
@@ -49,7 +55,8 @@ tabs = st.tabs([
     "📊 Prices & Forecast",
     "💚 Psychology Layer",
     "🍲 Food Recognition",
-    "📝 Sentiment Analysis"
+    "📝 Sentiment Analysis",
+    "🤝 Donor–NGO Workflow"
 ])
 
 
@@ -209,3 +216,48 @@ with tabs[4]:
                 st.info(f"😐 Neutral/Other ({score:.2f})")
         else:
             st.warning("⚠️ Please enter some text first.")
+
+
+# -----------------------------
+# TAB 6: DONOR–NGO WORKFLOW
+# -----------------------------
+with tabs[5]:
+    st.subheader("🤝 Donor–NGO Food Sharing Workflow")
+
+    st.markdown("""
+    This section connects **donors** with **NGOs** through a transparent workflow:
+    - Donors submit available food (with optional image + location)
+    - NGOs view donations on the map and claim them
+    - After delivery, donors receive gratitude feedback 🌾
+    """)
+
+    mode = st.radio("Choose your role:", ["Donor", "NGO"])
+
+    if mode == "Donor":
+        st.markdown("### 🍱 Submit a Food Donation")
+
+        donor_name = st.text_input("Your Name")
+        food_type = st.text_input("Food Type (e.g. rice, bread, cooked meal)")
+        quantity = st.number_input("Quantity (meals or kg)", min_value=1)
+        location = st.text_input("Location (city, area)")
+        food_img = st.file_uploader("Upload a food image (optional)", type=["jpg", "jpeg", "png"])
+
+        if st.button("Submit Donation"):
+            result = submit_donation(donor_name, food_type, quantity, location, food_img)
+            if result["status"] == "success":
+                st.success(f"✅ Donation recorded successfully! ID: {result['donation_id']}")
+            else:
+                st.error(f"❌ Failed to submit donation: {result['message']}")
+
+    elif mode == "NGO":
+        st.markdown("### 🏢 View and Claim Available Donations")
+
+        df_donations = view_and_claim_donations()
+
+        if df_donations.empty:
+            st.info("No unclaimed donations available right now.")
+        else:
+            st.dataframe(df_donations)
+            selected_id = st.selectbox("Select Donation ID to Claim:", df_donations["donation_id"].tolist())
+            if st.button("Claim Selected Donation"):
+                st.success(f"✅ Donation ID {selected_id} has been claimed successfully.")
