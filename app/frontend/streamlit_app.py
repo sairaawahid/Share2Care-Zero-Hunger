@@ -15,6 +15,8 @@ from geopy.geocoders import Nominatim
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import requests
+from requests.exceptions import RequestException
 
 from app.backend.config import (
     MERGED_SEVERITY_GEOJSON,
@@ -27,10 +29,116 @@ from app.backend.models.image_tagging import tag_food_image
 import PIL.Image as Image
 from app.backend.models.sentiment import analyze_sentiment
 
-# --- Donor–NGO Workflow Imports ---
-from app.backend.workflow.donor import submit_donation
-from app.backend.workflow.ngo import view_and_claim_donations, claim_donation
+# --- Donor–NGO Workflow Imports (kept for reference) ---
+# we will call backend APIs (no mock fallback). If you still want to use local helper functions,
+# they remain in this file but are not used when API is configured.
+try:
+    from app.backend.workflow.donor import submit_donation as local_submit_donation  # optional local import
+    from app.backend.workflow.ngo import view_and_claim_donations as local_view_donations
+except Exception:
+    local_submit_donation = None
+    local_view_donations = None
 
+# -----------------------------
+# API CONFIG / HELPERS
+# -----------------------------
+# Base API URL (override with STREAMLIT_API_URL env var); expectation: endpoints are under /api
+API_BASE = os.environ.get("STREAMLIT_API_URL", "http://127.0.0.1:8000/api").rstrip("/")
+
+API_TIMEOUT = 6  # seconds
+
+def _api_get(path: str, params: dict = None):
+    url = f"{API_BASE}{path}"
+    try:
+        r = requests.get(url, params=params or {}, timeout=API_TIMEOUT)
+        r.raise_for_status()
+        return r.json()
+    except RequestException as e:
+        st.error(f"API GET failed ({url}): {e}")
+        raise
+
+def _api_post(path: str, payload: dict = None, files: dict = None):
+    url = f"{API_BASE}{path}"
+    try:
+        r = requests.post(url, json=payload, files=files or None, timeout=API_TIMEOUT)
+        r.raise_for_status()
+        return r.json()
+    except RequestException as e:
+        st.error(f"API POST failed ({url}): {e}")
+        raise
+
+# Donations endpoints (expected)
+def api_list_donations(status: str = "Open"):
+    # Expect GET /donations?status=Open
+    return _api_get("/donations", params={"status": status})
+
+def api_submit_donation(donor_name, contact, location, food_desc, mood=None, image_bytes=None, image_filename=None):
+    # Expect POST /donations
+    payload = {
+        "donor_name": donor_name,
+        "donor_contact": contact,
+        "food_description": food_desc,
+        "quantity": "",            # optional
+        "location": location,
+        "note": "",
+        "mood": mood or ""
+    }
+    # If backend supports file upload via multipart/form-data: send file in `files`
+    files = None
+    if image_bytes is not None and image_filename:
+        files = {"image": (image_filename, image_bytes, "image/jpeg")}
+        # For multipart we use requests.post(files=...) inside _api_post; but our _api_post uses json by default.
+        # So do a direct requests call here:
+        url = f"{API_BASE}/donations"
+        try:
+            r = requests.post(url, data=payload, files=files, timeout=API_TIMEOUT)
+            r.raise_for_status()
+            return r.json()
+        except RequestException as e:
+            st.error(f"API POST failed ({url}): {e}")
+            raise
+    else:
+        return _api_post("/donations", payload)
+
+def api_claim_donation(donation_id: int, ngo_name: str, ngo_contact: str = ""):
+    # Expect POST /donations/{id}/claim
+    return _api_post(f"/donations/{donation_id}/claim", {"ngo_name": ngo_name, "ngo_contact": ngo_contact})
+
+def api_mark_delivered(donation_id: int):
+    # Expect POST /donations/{id}/deliver or similar
+    return _api_post(f"/donations/{donation_id}/deliver", {"donation_id": donation_id})
+
+def api_get_deliveries():
+    # Expect GET /delivery or /deliveries
+    try:
+        return _api_get("/delivery")
+    except Exception:
+        # try alternate route
+        return _api_get("/deliveries")
+
+def api_get_analytics():
+    return _api_get("/analytics/food-security")
+
+# -----------------------------
+# Local JSON helpers (kept for compatibility but NOT used if API is available)
+# -----------------------------
+DATA_FILE = "donations.json"
+
+def load_donations_json_local():
+    try:
+        with open(DATA_FILE, "r") as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        data = []
+    return data
+
+def save_donations_json_local(data):
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+
+# -----------------------------
+# Geocoding cache
+# -----------------------------
 @st.cache_data(show_spinner=False)
 def geocode_location_cached(location_text):
     """Cache geocoding results to avoid re-fetching same location."""
@@ -43,74 +151,6 @@ def geocode_location_cached(location_text):
         return None
     return None
 
-# -------------------------------------------
-# Donor–NGO Workflow Helper Functions
-# -------------------------------------------
-DATA_FILE = "donations.json"
-
-def load_donations():
-    try:
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        data = []
-    return data
-
-def save_donations(data):
-    with open(DATA_FILE, "w") as f:
-        json.dump(data, f, indent=2)
-
-def submit_donation(donor_name, contact, location, food_desc, mood, food_img):
-    data = load_donations()
-    donation_id = len(data) + 1
-    record = {
-        "donation_id": donation_id,
-        "donor_name": donor_name,
-        "contact": contact,
-        "location": location,
-        "food_desc": food_desc,
-        "mood": mood,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "status": "Available",
-        "claimed_by": None
-    }
-    if food_img:
-        record["food_img"] = food_img.name
-    data.append(record)
-    save_donations(data)
-    return record
-
-def view_donations_df():
-    data = load_donations()
-    if not data:
-        return pd.DataFrame()
-    return pd.DataFrame(data)
-
-def claim_donation(donation_id, ngo_name):
-    data = load_donations()
-    for d in data:
-        if d["donation_id"] == donation_id and d["status"] == "Available":
-            d["status"] = "Claimed"
-            d["claimed_by"] = ngo_name
-            d["claimed_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            save_donations(data)
-            return d
-    return None
-
-def mark_delivered(donation_id):
-    """
-    Marks a claimed donation as Delivered.
-    Returns the donation dict if successful, None otherwise.
-    """
-    data = load_donations()
-    for d in data:
-        if d["donation_id"] == donation_id and d["status"] == "Claimed":
-            d["status"] = "Delivered"
-            d["delivered_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            save_donations(data)
-            return d
-    return None
-    
 # -----------------------------
 # PAGE CONFIG
 # -----------------------------
@@ -136,9 +176,9 @@ tabs = st.tabs([
     "🍲 Food Recognition",
     "📝 Sentiment Analysis",
     "🍛 Donate Food",
-    "🤝 NGO Dashboard"
+    "🤝 NGO Dashboard",
+    "🚚 Volunteer / Delivery"
 ])
-
 
 # -----------------------------
 # TAB 1: MAP VIEW
@@ -192,7 +232,7 @@ with tabs[1]:
 
         # Forecast future
         try:
-            fcst = forecast_prices(df_sel, periods=60)
+            hist, fcst = forecast_prices(df_sel, periods=60)
             ax.plot(fcst["ds"], fcst["yhat"], label="Forecast", color="red")
             ax.fill_between(fcst["ds"], fcst["yhat_lower"], fcst["yhat_upper"],
                             alpha=0.2, color="red")
@@ -233,7 +273,7 @@ with tabs[2]:
         if note.strip():
             res = analyze_sentiment(note)
             label, score = res["label"], res["score"]
-            
+
             st.write(f"Your note: *{note}*")
             if label == "POSITIVE":
                 st.success(f"😊 Positive Mood ({score:.2f}) — Keep spreading positivity! 💚")
@@ -243,7 +283,6 @@ with tabs[2]:
                 st.info(f"😐 Neutral Mood ({score:.2f}) — Stay balanced, your efforts still matter 🌱")
         else:
             st.warning("⚠️ Please write something about your mood.")
-
 
 # -----------------------------
 # TAB 4: FOOD IMAGE TAGGING
@@ -257,7 +296,7 @@ with tabs[3]:
     if uploaded:
         img = Image.open(uploaded).convert("RGB")
         st.image(img, caption="Uploaded Image", use_column_width=True)
-        
+
         try:
             labels = tag_food_image(img, topk=3)
 
@@ -297,7 +336,6 @@ with tabs[4]:
         else:
             st.warning("⚠️ Please enter some text first.")
 
-
 # ----------------------------- #
 # TAB 6: DONOR–NGO WORKFLOW
 # ----------------------------- #
@@ -332,9 +370,24 @@ with tabs[5]:
 
         if st.button("🚀 Submit Donation"):
             if donor_name and contact and location and food_desc:
-                result = submit_donation(donor_name, contact, location, food_desc, mood, food_img)
-                st.success("✅ Donation submitted successfully!")
-                st.json(result)
+                # Prepare image bytes if provided
+                image_bytes = None
+                image_filename = None
+                if food_img is not None:
+                    image_bytes = food_img.getvalue()
+                    image_filename = food_img.name
+
+                try:
+                    resp = api_submit_donation(
+                        donor_name, contact, location, food_desc,
+                        mood, image_bytes, image_filename
+                    )
+                    st.success("✅ Donation submitted successfully!")
+                    st.json(resp)
+                except Exception:
+                    st.error("❌ Submission failed — ensure backend is running and STREAMLIT_API_URL is set correctly.")
+                    # stop here
+                    st.stop()
 
                 # --- AI-Driven Encouragement ---
                 if mood == "POSITIVE":
@@ -350,23 +403,32 @@ with tabs[5]:
     elif mode == "NGO":
         st.markdown("### 🏢 View and Claim Available Donations")
 
-        df_donations = view_donations_df()
-        available_df = df_donations[df_donations["status"] == "Available"] if not df_donations.empty else pd.DataFrame()
+        # Fetch from API
+        try:
+            donations_list = api_list_donations(status="Open")
+            available_df = pd.DataFrame(donations_list) if donations_list else pd.DataFrame()
+        except Exception:
+            st.error("❌ Could not fetch donations from backend. Please start the backend and set STREAMLIT_API_URL.")
+            st.stop()
 
         if available_df.empty:
             st.info("No unclaimed donations available right now.")
         else:
             st.dataframe(available_df)
-            selected_id = st.selectbox("Select Donation ID to Claim:", available_df["donation_id"].tolist())
+            # donation id may be integer or string depending on backend schema
+            id_choices = available_df["id"].tolist() if "id" in available_df.columns else available_df["donation_id"].tolist()
+            selected_id = st.selectbox("Select Donation ID to Claim:", id_choices)
             ngo_name = st.text_input("Enter your NGO Name")
+            ngo_contact = st.text_input("Enter NGO contact (optional)")
 
             if st.button("Claim Selected Donation"):
                 if ngo_name.strip():
-                    claimed = claim_donation(selected_id, ngo_name)
-                    if claimed:
+                    try:
+                        claim_resp = api_claim_donation(selected_id, ngo_name, ngo_contact)
                         st.success(f"✅ Donation ID {selected_id} has been claimed by {ngo_name}!")
-                    else:
-                        st.warning("⚠️ That donation may have already been claimed.")
+                        st.json(claim_resp)
+                    except Exception:
+                        st.error("❌ Claim failed — ensure backend is running and endpoint exists.")
                 else:
                     st.error("Please enter your NGO name before claiming.")
 
@@ -376,7 +438,13 @@ with tabs[5]:
 with tabs[6]:
     st.subheader("📊 NGO Dashboard — Donation Status Overview")
 
-    df = view_donations_df()
+    # Fetch full donation list (all statuses)
+    try:
+        donations_list_all = _api_get("/donations")  # assume returns all if no status provided
+        df = pd.DataFrame(donations_list_all) if donations_list_all else pd.DataFrame()
+    except Exception:
+        st.error("❌ Could not fetch donations from backend. Please start the backend and set STREAMLIT_API_URL.")
+        st.stop()
 
     if df.empty:
         st.info("No donations submitted yet.")
@@ -386,7 +454,7 @@ with tabs[6]:
 
         # --- Filter by status ---
         st.markdown("### 🔍 Filter by Status")
-        filter_option = st.selectbox("Select Status", ["All", "Available", "Claimed", "Delivered"])
+        filter_option = st.selectbox("Select Status", ["All", "Open", "Claimed", "Delivered"])
         if filter_option != "All":
             df = df[df["status"] == filter_option]
 
@@ -394,103 +462,97 @@ with tabs[6]:
 
         # --- Claimed donations summary ---
         st.markdown("### 🏢 Claimed Donations Summary")
-        claimed_df = df[df["status"] == "Claimed"]
+        claimed_df = df[df["status"].str.contains("Claimed", na=False)]
         if claimed_df.empty:
             st.info("No donations have been claimed yet.")
         else:
-            st.table(
-                claimed_df[
-                    ["donation_id", "donor_name", "claimed_by", "claimed_at", "food_desc"]
-                ]
-            )
+            cols_show = [c for c in ["donation_id", "donor_name", "ngo_name", "claimed_at", "food_description"] if c in claimed_df.columns]
+            st.table(claimed_df[cols_show])
 
-        # --- Donor → NGO Claim Workflow ---
+        # --- Donor → NGO Claim Workflow (also allow claim from dashboard) ---
         st.markdown("### 🤝 Claim a Donation")
         donation_id_claim = st.number_input("Enter Donation ID to claim", min_value=1, step=1, key="claim_id")
-        ngo_name = st.text_input("NGO Name", key="ngo_name_input")
+        ngo_name = st.text_input("NGO Name", key="ngo_name_input_dashboard")
+        ngo_contact = st.text_input("NGO Contact (optional)", key="ngo_contact_input_dashboard")
 
-        if st.button("Claim Donation"):
-            success = claim_donation(donation_id_claim, ngo_name)
-            if success:
+        if st.button("Claim Donation (Dashboard)"):
+            try:
+                resp = api_claim_donation(donation_id_claim, ngo_name, ngo_contact)
                 st.success(f"Donation {donation_id_claim} successfully claimed by {ngo_name}.")
-                st.experimental_rerun()  # 🔄 Refresh the dashboard to show updated table
-        else:
-            st.error("Donation cannot be claimed (already claimed/delivered or invalid ID).")
-
+                st.json(resp)
+                st.experimental_rerun()
+            except Exception:
+                st.error("❌ Could not claim donation — check backend endpoints and ID.")
 
         # --- Mark Claimed Donations as Delivered ---
         st.markdown("### 📦 Mark Donation as Delivered")
-        donation_id_deliver = st.number_input("Enter Claimed Donation ID", min_value=1, step=1, key="deliver_id")
+        donation_id_deliver = st.number_input("Enter Claimed Donation ID", min_value=1, step=1, key="deliver_id_dashboard")
 
         if st.button("Mark as Delivered"):
-            success = mark_delivered(donation_id_deliver)
-            if success:
+            try:
+                resp = api_mark_delivered(donation_id_deliver)
                 st.success(f"Donation {donation_id_deliver} marked as Delivered.")
-                st.experimental_rerun()  # 🔄 Refresh the dashboard to show updated table
-            else:
-                st.error("Donation cannot be marked as delivered (must be Claimed first).")
+                st.json(resp)
+                st.experimental_rerun()
+            except Exception:
+                st.error("❌ Could not mark as delivered — check backend endpoints and ID.")
 
-        # ---------- Map View for NGO Dashboard ----------
-        show_map = st.checkbox("🗺️ Show Map View of Donations")
+# ----------------------------- #
+# TAB 8: VOLUNTEER / DELIVERY COORDINATION
+# ----------------------------- #
+with tabs[7]:
+    st.subheader("🚚 Volunteer / Delivery Coordination")
 
-        if show_map and not df.empty:
-            st.markdown("### 📍 Donation Pickup Locations")
+    st.markdown(
+        """
+        Visualize active deliveries, volunteer assignments and (if available) routes.
+        This tab calls the backend delivery endpoints. If your delivery objects include coordinates,
+        they will be plotted on the map.
+        """
+    )
 
-            # Initialize base map (Pakistan-centered)
+    try:
+        deliveries = api_get_deliveries()
+    except Exception:
+        st.error("❌ Could not load deliveries from backend. Make sure backend is running and STREAMLIT_API_URL is set.")
+        st.stop()
+
+    if not deliveries:
+        st.info("No deliveries scheduled yet.")
+    else:
+        deliveries_df = pd.DataFrame(deliveries)
+        st.dataframe(deliveries_df)
+
+        show_routes = st.checkbox("Show map with delivery points & routes")
+        if show_routes:
             m = folium.Map(location=[30.3753, 69.3451], zoom_start=5)
+            for d in deliveries:
+                # expecting each delivery may have pickup_coords and dropoff_coords as [lat,lon]
+                pickup = d.get("pickup_coords") or d.get("pickup_latlon")
+                dropoff = d.get("dropoff_coords") or d.get("dropoff_latlon")
+                volunteer = d.get("volunteer_name") or d.get("assigned_to")
+                status = d.get("status", "scheduled")
+                if pickup:
+                    lat, lon = pickup if isinstance(pickup, (list, tuple)) else (None, None)
+                    if lat and lon:
+                        folium.Marker([lat, lon], popup=f"Pickup - {d.get('id','')}", icon=folium.Icon(color="green")).add_to(m)
+                if dropoff:
+                    lat2, lon2 = dropoff if isinstance(dropoff, (list, tuple)) else (None, None)
+                    if lat2 and lon2:
+                        folium.Marker([lat2, lon2], popup=f"Dropoff - {d.get('id','')}", icon=folium.Icon(color="blue")).add_to(m)
+                # draw route line if both present
+                try:
+                    if pickup and dropoff and isinstance(pickup, (list, tuple)) and isinstance(dropoff, (list, tuple)):
+                        folium.PolyLine([pickup, dropoff], color="orange", weight=3, opacity=0.8).add_to(m)
+                except Exception:
+                    pass
+            st_folium(m, width=900, height=560)
 
-            # Define status-based colors
-            status_colors = {
-                "Available": "green",
-                "Claimed": "blue",
-                "Delivered": "gray",
-            }
-
-            for _, row in df.iterrows():  # ✅ fixed: use df instead of data
-                location_text = str(row["location"])
-                donation_id = row.get("donation_id", "N/A")
-                donor_name = row.get("donor_name", "Unknown Donor")
-                food_desc = row.get("food_desc", "No description")
-                status = row.get("status", "Available")
-                ngo = row.get("claimed_by", "—")
-
-                coords = geocode_location_cached(location_text)
-                if coords:
-                    lat, lon = coords
-                    color = status_colors.get(status, "lightgray")
-                    popup_html = f"""
-                    <div style='font-size:14px; line-height:1.4'>
-                    <b>Donation ID:</b> {donation_id}<br>
-                    <b>Donor:</b> {donor_name}<br>
-                    <b>Food:</b> {food_desc}<br>
-                    <b>Claimed By:</b> {ngo}<br>
-                    <b>Status:</b> <span style='color:white; background:{color}; 
-                    padding:2px 6px; border-radius:4px;'>{status}</span>
-                    </div>
-                    """
-
-                    folium.Marker(
-                        [lat, lon],
-                        popup=popup_html,
-                        icon=folium.Icon(color=color, icon="cutlery", prefix="fa"),
-                    ).add_to(m)
-
-            # Add legend to map
-            legend_html = """
-            <div style="
-                position: fixed; 
-                bottom: 30px; left: 30px; width: 160px; height: 130px; 
-                background-color: white; z-index:9999; font-size:14px; 
-                border-radius:8px; box-shadow:0 0 6px rgba(0,0,0,0.3);
-                padding: 10px;">
-                <b>🗺️ Legend</b><br>
-                <i style="background:green;width:10px;height:10px;float:left;margin-right:8px;margin-top:4px;"></i> Available<br>
-                <i style="background:blue;width:10px;height:10px;float:left;margin-right:8px;margin-top:4px;"></i> Claimed<br>
-                <i style="background:gray;width:10px;height:10px;float:left;margin-right:8px;margin-top:4px;"></i> Delivered<br>
-            </div>
-            """
-            m.get_root().html.add_child(folium.Element(legend_html))
-
-            # Display map
-            st_folium(m, width=750, height=480)
+    # Optionally show analytics
+    if st.button("📈 Show quick analytics from backend"):
+        try:
+            analytics = api_get_analytics()
+            st.json(analytics)
+        except Exception:
+            st.error("❌ Could not fetch analytics from backend.")
 
