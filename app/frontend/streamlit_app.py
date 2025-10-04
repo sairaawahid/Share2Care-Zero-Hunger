@@ -271,64 +271,6 @@ with tabs[4]:
             st.warning("⚠️ Please enter some text first.")
 
 
-import json
-from datetime import datetime
-import pandas as pd
-
-DATA_FILE = "donations.json"
-
-# -----------------------------
-# Helper functions
-# -----------------------------
-def load_donations():
-    try:
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        data = []
-    return data
-
-def save_donations(data):
-    with open(DATA_FILE, "w") as f:
-        json.dump(data, f, indent=2)
-
-def submit_donation(donor_name, contact, location, food_desc, mood, food_img):
-    data = load_donations()
-    donation_id = len(data) + 1
-    record = {
-        "donation_id": donation_id,
-        "donor_name": donor_name,
-        "contact": contact,
-        "location": location,
-        "food_desc": food_desc,
-        "mood": mood,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "status": "Available",
-        "claimed_by": None
-    }
-    if food_img:
-        record["food_img"] = food_img.name
-    data.append(record)
-    save_donations(data)
-    return record
-
-def view_donations_df():
-    data = load_donations()
-    if not data:
-        return pd.DataFrame()
-    return pd.DataFrame(data)
-
-def claim_donation(donation_id, ngo_name):
-    data = load_donations()
-    for d in data:
-        if d["donation_id"] == donation_id and d["status"] == "Available":
-            d["status"] = "Claimed"
-            d["claimed_by"] = ngo_name
-            d["claimed_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            save_donations(data)
-            return d
-    return None
-
 # ----------------------------- #
 # TAB 6: DONOR–NGO WORKFLOW
 # ----------------------------- #
