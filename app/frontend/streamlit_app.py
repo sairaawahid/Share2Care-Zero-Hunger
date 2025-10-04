@@ -23,7 +23,7 @@ from app.backend.models.price_forecast import forecast_prices
 from app.backend.models.image_tagging import tag_food_image
 import PIL.Image as Image
 from app.backend.models.sentiment import analyze_sentiment
-# --- Donor–NGO Workflow Imports ---
+
 from app.backend.workflow.donor import submit_donation
 from app.backend.workflow.ngo import view_and_claim_donations
 
@@ -53,7 +53,8 @@ tabs = st.tabs([
     "💚 Psychology Layer",
     "🍲 Food Recognition",
     "📝 Sentiment Analysis",
-    "🤝 Donor–NGO Workflow"
+    "🍛 Donate Food",
+    "🤝 NGO Dashboard"
 ])
 
 
@@ -215,37 +216,55 @@ with tabs[4]:
             st.warning("⚠️ Please enter some text first.")
 
 
-# -----------------------------
+# ----------------------------- #
 # TAB 6: DONOR–NGO WORKFLOW
-# -----------------------------
+# ----------------------------- #
 with tabs[5]:
     st.subheader("🤝 Donor–NGO Food Sharing Workflow")
 
     st.markdown("""
-    This section connects **donors** with **NGOs** through a transparent workflow:
-    - Donors submit available food (with optional image + location)
-    - NGOs view donations on the map and claim them
-    - After delivery, donors receive gratitude feedback 🌾
+    This connects **donors** with **NGOs** through a transparent process:
+    - Donors submit available food (with optional image + note)
+    - NGOs view donations and claim them
+    - AI provides encouragement based on donor sentiment 🌱
     """)
 
     mode = st.radio("Choose your role:", ["Donor", "NGO"])
 
+    # ---------- DONOR SIDE ----------
     if mode == "Donor":
         st.markdown("### 🍱 Submit a Food Donation")
 
         donor_name = st.text_input("Your Name")
-        food_type = st.text_input("Food Type (e.g. rice, bread, cooked meal)")
-        quantity = st.number_input("Quantity (meals or kg)", min_value=1)
-        location = st.text_input("Location (city, area)")
-        food_img = st.file_uploader("Upload a food image (optional)", type=["jpg", "jpeg", "png"])
+        contact = st.text_input("Contact Info (email / phone)")
+        location = st.text_input("Pickup Location (district or coordinates)")
+        food_desc = st.text_area("Describe the Food (e.g., rice, cooked meals, bread)")
+        food_img = st.file_uploader("Optional: Upload Food Image", type=["jpg", "jpeg", "png"])
+        note = st.text_area("Add a short note or message (optional):")
 
-        if st.button("Submit Donation"):
-            result = submit_donation(donor_name, food_type, quantity, location, food_img)
-            if result["status"] == "success":
-                st.success(f"✅ Donation recorded successfully! ID: {result['donation_id']}")
+        # --- Sentiment Analysis ---
+        mood = None
+        if note.strip():
+            res = analyze_sentiment(note)
+            mood = res["label"]
+
+        if st.button("🚀 Submit Donation"):
+            if donor_name and contact and location and food_desc:
+                result = submit_donation(donor_name, contact, location, food_desc, mood, food_img)
+                st.success("✅ Donation submitted successfully!")
+                st.json(result)
+
+                # --- AI-Driven Nudges ---
+                if mood == "POSITIVE":
+                    st.info("💚 You’re spreading hope! Keep donating regularly to make an even bigger impact.")
+                elif mood == "NEGATIVE":
+                    st.warning("💭 Helping others might lift your spirits too — your kindness truly matters.")
+                else:
+                    st.info("🌱 Thanks for your support! Every meal counts toward Zero Hunger.")
             else:
-                st.error(f"❌ Failed to submit donation: {result['message']}")
+                st.error("⚠️ Please fill in all required fields.")
 
+    # ---------- NGO SIDE ----------
     elif mode == "NGO":
         st.markdown("### 🏢 View and Claim Available Donations")
 
@@ -258,3 +277,33 @@ with tabs[5]:
             selected_id = st.selectbox("Select Donation ID to Claim:", df_donations["donation_id"].tolist())
             if st.button("Claim Selected Donation"):
                 st.success(f"✅ Donation ID {selected_id} has been claimed successfully.")
+
+
+# -----------------------------
+# TAB 7: NGO DASHBOARD
+# -----------------------------
+with tabs[6]:
+    st.subheader("🤝 NGO Dashboard")
+
+    st.markdown("View and claim available food donations submitted by donors.")
+
+    data = view_and_claim_donations()
+
+    if data.empty:
+        st.info("No donations available yet.")
+    else:
+        st.dataframe(data)
+
+        selected_index = st.number_input(
+            "Enter the index of the donation to claim:", min_value=0, max_value=len(data)-1, step=1
+        )
+
+        ngo_name = st.text_input("Your NGO Name")
+        contact = st.text_input("Contact Info")
+
+        if st.button("✅ Claim Donation"):
+            row = data.iloc[int(selected_index)]
+            st.success(f"{ngo_name} has successfully claimed donation from {row['donor_name']}!")
+
+            # --- Positive Feedback for Donor (AI-Nudge simulation) ---
+            st.info(f"📢 Feedback sent: ‘Thank you, {row['donor_name']}! Your food is now helping a community in need.’")
