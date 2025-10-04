@@ -17,6 +17,7 @@ Streamlit · (FastAPI optional) · Postgres/Supabase or SQLite · Folium/Leaflet
 - `notebooks/` — exploration & preprocessing
 
 ## Repo Structure
+```bash
 app/
  ├── backend/
  │    ├── main.py                  ← FastAPI entry point
@@ -45,6 +46,6 @@ app/
  └── scripts/
       ├── prepare_core.py
       ├── check_wfp.py
-
+```
 ## Hackathon
 GNEC Hackathon 2025 Fall — SDG 2 (Zero Hunger)
