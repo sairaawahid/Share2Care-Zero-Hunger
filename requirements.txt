@@ -9,6 +9,7 @@ streamlit-folium
 Pillow
 transformers
 torch
+torchvision
 scikit-learn
 geopandas==0.14.4
 shapely==2.0.4
