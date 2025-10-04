@@ -372,7 +372,7 @@ with tabs[6]:
 
         # --- Filter by status ---
         st.markdown("### 🔍 Filter by Status")
-        filter_option = st.selectbox("Select Status", ["All", "Available", "Claimed"])
+        filter_option = st.selectbox("Select Status", ["All", "Available", "Claimed", "Delivered"])
         if filter_option != "All":
             df = df[df["status"] == filter_option]
 
@@ -390,7 +390,32 @@ with tabs[6]:
                 ]
             )
 
-        # ---------- Optional Cached Map View for NGO Dashboard ----------
+        # --- Donor → NGO Claim Workflow ---
+        st.markdown("### 🤝 Claim a Donation")
+        donation_id_claim = st.number_input("Enter Donation ID to claim", min_value=1, step=1, key="claim_id")
+        ngo_name = st.text_input("NGO Name", key="ngo_name_input")
+
+        if st.button("Claim Donation"):
+            from backend_helpers import claim_donation
+            success = claim_donation(donation_id_claim, ngo_name)
+            if success:
+                st.success(f"Donation {donation_id_claim} successfully claimed by {ngo_name}.")
+            else:
+                st.error("Donation cannot be claimed (already claimed/delivered or invalid ID).")
+
+        # --- Mark Claimed Donations as Delivered ---
+        st.markdown("### 📦 Mark Donation as Delivered")
+        donation_id_deliver = st.number_input("Enter Claimed Donation ID", min_value=1, step=1, key="deliver_id")
+
+        if st.button("Mark as Delivered"):
+            from backend_helpers import mark_delivered
+            success = mark_delivered(donation_id_deliver)
+            if success:
+                st.success(f"Donation {donation_id_deliver} marked as Delivered.")
+            else:
+                st.error("Donation cannot be marked as delivered (must be Claimed first).")
+
+        # ---------- Map View for NGO Dashboard ----------
         show_map = st.checkbox("🗺️ Show Map View of Donations")
 
         if show_map and not df.empty:
@@ -399,26 +424,24 @@ with tabs[6]:
             # Initialize base map (Pakistan-centered)
             m = folium.Map(location=[30.3753, 69.3451], zoom_start=5)
 
-            # Define status-based colors and badges
+            # Define status-based colors
             status_colors = {
                 "Available": "green",
                 "Claimed": "blue",
                 "Delivered": "gray",
             }
 
-            for _, row in df.iterrows():
+            for _, row in df.iterrows():  # ✅ fixed: use df instead of data
                 location_text = str(row["location"])
                 donation_id = row.get("donation_id", "N/A")
                 donor_name = row.get("donor_name", "Unknown Donor")
-                food_desc = row.get("food_desc", "No description")  # ✅ corrected key
+                food_desc = row.get("food_desc", "No description")
                 status = row.get("status", "Available")
                 ngo = row.get("claimed_by", "—")
 
                 coords = geocode_location_cached(location_text)
                 if coords:
                     lat, lon = coords
-
-                    # Badge color and HTML popup
                     color = status_colors.get(status, "lightgray")
                     popup_html = f"""
                     <div style='font-size:14px; line-height:1.4'>
@@ -441,7 +464,7 @@ with tabs[6]:
             legend_html = """
             <div style="
                 position: fixed; 
-                bottom: 30px; left: 30px; width: 160px; height: 110px; 
+                bottom: 30px; left: 30px; width: 160px; height: 130px; 
                 background-color: white; z-index:9999; font-size:14px; 
                 border-radius:8px; box-shadow:0 0 6px rgba(0,0,0,0.3);
                 padding: 10px;">
@@ -455,3 +478,4 @@ with tabs[6]:
 
             # Display map
             st_folium(m, width=750, height=480)
+
