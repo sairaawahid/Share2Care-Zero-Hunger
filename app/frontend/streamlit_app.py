@@ -96,6 +96,20 @@ def claim_donation(donation_id, ngo_name):
             save_donations(data)
             return d
     return None
+
+def mark_delivered(donation_id):
+    """
+    Marks a claimed donation as Delivered.
+    Returns the donation dict if successful, None otherwise.
+    """
+    data = load_donations()
+    for d in data:
+        if d["donation_id"] == donation_id and d["status"] == "Claimed":
+            d["status"] = "Delivered"
+            d["delivered_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            save_donations(data)
+            return d
+    return None
     
 # -----------------------------
 # PAGE CONFIG
@@ -396,22 +410,23 @@ with tabs[6]:
         ngo_name = st.text_input("NGO Name", key="ngo_name_input")
 
         if st.button("Claim Donation"):
-            from backend_helpers import claim_donation
             success = claim_donation(donation_id_claim, ngo_name)
             if success:
                 st.success(f"Donation {donation_id_claim} successfully claimed by {ngo_name}.")
-            else:
-                st.error("Donation cannot be claimed (already claimed/delivered or invalid ID).")
+                st.experimental_rerun()  # 🔄 Refresh the dashboard to show updated table
+        else:
+            st.error("Donation cannot be claimed (already claimed/delivered or invalid ID).")
+
 
         # --- Mark Claimed Donations as Delivered ---
         st.markdown("### 📦 Mark Donation as Delivered")
         donation_id_deliver = st.number_input("Enter Claimed Donation ID", min_value=1, step=1, key="deliver_id")
 
         if st.button("Mark as Delivered"):
-            from backend_helpers import mark_delivered
             success = mark_delivered(donation_id_deliver)
             if success:
                 st.success(f"Donation {donation_id_deliver} marked as Delivered.")
+                st.experimental_rerun()  # 🔄 Refresh the dashboard to show updated table
             else:
                 st.error("Donation cannot be marked as delivered (must be Claimed first).")
 
