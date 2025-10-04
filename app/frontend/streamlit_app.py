@@ -23,7 +23,7 @@ from app.backend.models.price_forecast import forecast_prices
 from app.backend.models.image_tagging import tag_food_image
 import PIL.Image as Image
 from app.backend.models.sentiment import analyze_sentiment
-from app.backend.workflow import (
+from app.backend.donor-ngo-workflow import (
     submit_donation,
     list_donations,
     claim_donation,
