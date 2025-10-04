@@ -11,6 +11,7 @@ from datetime import datetime
 import json
 import folium
 from streamlit_folium import st_folium
+from geopy.geocoders import Nominatim
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,6 +30,18 @@ from app.backend.models.sentiment import analyze_sentiment
 # --- Donor–NGO Workflow Imports ---
 from app.backend.workflow.donor import submit_donation
 from app.backend.workflow.ngo import view_and_claim_donations, claim_donation
+
+@st.cache_data(show_spinner=False)
+def geocode_location_cached(location_text):
+    """Cache geocoding results to avoid re-fetching same location."""
+    geolocator = Nominatim(user_agent="ataraxai_donor_ngo_map")
+    try:
+        loc = geolocator.geocode(location_text, timeout=5)
+        if loc:
+            return (loc.latitude, loc.longitude)
+    except Exception:
+        return None
+    return None
 
 # -------------------------------------------
 # Donor–NGO Workflow Helper Functions
@@ -354,8 +367,10 @@ with tabs[6]:
     if df.empty:
         st.info("No donations submitted yet.")
     else:
+        # --- Full data table ---
         st.dataframe(df)
 
+        # --- Filter by status ---
         st.markdown("### 🔍 Filter by Status")
         filter_option = st.selectbox("Select Status", ["All", "Available", "Claimed"])
         if filter_option != "All":
@@ -363,9 +378,80 @@ with tabs[6]:
 
         st.dataframe(df)
 
+        # --- Claimed donations summary ---
         st.markdown("### 🏢 Claimed Donations Summary")
         claimed_df = df[df["status"] == "Claimed"]
         if claimed_df.empty:
             st.info("No donations have been claimed yet.")
         else:
-            st.table(claimed_df[["donation_id", "donor_name", "claimed_by", "claimed_at", "food_desc"]])
+            st.table(
+                claimed_df[
+                    ["donation_id", "donor_name", "claimed_by", "claimed_at", "food_desc"]
+                ]
+            )
+
+        # ---------- Optional Cached Map View for NGO Dashboard ----------
+        show_map = st.checkbox("🗺️ Show Map View of Donations")
+
+        if show_map and not df.empty:
+            st.markdown("### 📍 Donation Pickup Locations")
+
+            # Initialize base map (Pakistan-centered)
+            m = folium.Map(location=[30.3753, 69.3451], zoom_start=5)
+
+            # Define status-based colors and badges
+            status_colors = {
+                "Available": "green",
+                "Claimed": "blue",
+                "Delivered": "gray",
+            }
+
+            for _, row in df.iterrows():
+                location_text = str(row["location"])
+                donation_id = row.get("donation_id", "N/A")
+                donor_name = row.get("donor_name", "Unknown Donor")
+                food_desc = row.get("food_desc", "No description")  # ✅ corrected key
+                status = row.get("status", "Available")
+                ngo = row.get("claimed_by", "—")
+
+                coords = geocode_location_cached(location_text)
+                if coords:
+                    lat, lon = coords
+
+                    # Badge color and HTML popup
+                    color = status_colors.get(status, "lightgray")
+                    popup_html = f"""
+                    <div style='font-size:14px; line-height:1.4'>
+                    <b>Donation ID:</b> {donation_id}<br>
+                    <b>Donor:</b> {donor_name}<br>
+                    <b>Food:</b> {food_desc}<br>
+                    <b>Claimed By:</b> {ngo}<br>
+                    <b>Status:</b> <span style='color:white; background:{color}; 
+                    padding:2px 6px; border-radius:4px;'>{status}</span>
+                    </div>
+                    """
+
+                    folium.Marker(
+                        [lat, lon],
+                        popup=popup_html,
+                        icon=folium.Icon(color=color, icon="cutlery", prefix="fa"),
+                    ).add_to(m)
+
+            # Add legend to map
+            legend_html = """
+            <div style="
+                position: fixed; 
+                bottom: 30px; left: 30px; width: 160px; height: 110px; 
+                background-color: white; z-index:9999; font-size:14px; 
+                border-radius:8px; box-shadow:0 0 6px rgba(0,0,0,0.3);
+                padding: 10px;">
+                <b>🗺️ Legend</b><br>
+                <i style="background:green;width:10px;height:10px;float:left;margin-right:8px;margin-top:4px;"></i> Available<br>
+                <i style="background:blue;width:10px;height:10px;float:left;margin-right:8px;margin-top:4px;"></i> Claimed<br>
+                <i style="background:gray;width:10px;height:10px;float:left;margin-right:8px;margin-top:4px;"></i> Delivered<br>
+            </div>
+            """
+            m.get_root().html.add_child(folium.Element(legend_html))
+
+            # Display map
+            st_folium(m, width=750, height=480)
