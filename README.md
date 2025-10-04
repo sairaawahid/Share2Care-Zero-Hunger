@@ -16,5 +16,35 @@ Streamlit · (FastAPI optional) · Postgres/Supabase or SQLite · Folium/Leaflet
 - `app/models/` — lightweight models or metadata
 - `notebooks/` — exploration & preprocessing
 
+## Repo Structure
+app/
+ ├── backend/
+ │    ├── main.py                  ← FastAPI entry point
+ │    ├── config.py                ← Paths to data/models
+ │    ├── data_loader.py           ← Data preprocessing utilities
+ │    ├── donor-ngo-workflow.py    ← Donation workflow (DB + logic)
+ │    ├── database.py              ← Global data structures (temporary)
+ │    ├── models/
+ │    │     ├── image_tagging.py   ← Food image classification (MobileNet)
+ │    │     ├── sentiment.py       ← Sentiment analysis pipeline
+ │    │     ├── price_forecast.py  ← Forecasting food prices (Prophet/ARIMA)
+ │    ├── data/
+ │    │     ├── init_donations_csv.py
+ │    ├── routes/
+ │    │     ├── auth.py
+ │    │     ├── donations.py
+ │    │     ├── communities.py
+ │    │     ├── delivery.py
+ │    │     ├── analytics.py
+ │    │     ├── psychology.py
+ │    │     ├── admin.py
+ │    ├── requirements.txt         ← Backend-specific dependencies
+ ├── frontend/                     ← Streamlit or React front-end
+ ├── data/
+ ├── models/
+ └── scripts/
+      ├── prepare_core.py
+      ├── check_wfp.py
+
 ## Hackathon
 GNEC Hackathon 2025 Fall — SDG 2 (Zero Hunger)
