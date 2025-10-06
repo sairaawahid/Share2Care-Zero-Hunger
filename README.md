@@ -24,25 +24,25 @@ app/
  │    ├── config.py                ← Paths to data/models
  │    ├── data_loader.py           ← Data preprocessing utilities
  │    ├── donor-ngo-workflow.py    ← Donation workflow (DB + logic)
- │    ├── database.py              ← Global data structures (temporary)
- │    ├── models/
+ │    ├── database.py              ← Mock in-memory DB
+ │    ├── models/                  ← Pydantic models for request/response validation
  │    │     ├── image_tagging.py   ← Food image classification (MobileNet)
  │    │     ├── sentiment.py       ← Sentiment analysis pipeline
  │    │     ├── price_forecast.py  ← Forecasting food prices (Prophet/ARIMA)
  │    ├── data/
  │    │     ├── init_donations_csv.py
- │    ├── routes/
- │    │     ├── auth.py
- │    │     ├── donations.py
- │    │     ├── communities.py
- │    │     ├── delivery.py
- │    │     ├── analytics.py
- │    │     ├── psychology.py
- │    │     ├── admin.py
- │    ├── requirements.txt         ← Backend-specific dependencies
+ │    ├── routes/                  ← API endpoints
+ │    │     ├── auth.py            ← Login/register endpoints
+ │    │     ├── donations.py       ← Donations CRUD
+ │    │     ├── communities.py     ← Communities info
+ │    │     ├── delivery.py        ← Delivery scheduling
+ │    │     ├── analytics.py       ← Data visualization endpoints
+ │    │     ├── psychology.py      ← Psychological features
+ │    │     ├── admin.py           ← Admin endpoints
+ │    ├── requirements.txt         ← Dependencies
  ├── frontend/                     ← Streamlit or React front-end
- ├── data/
- ├── models/
+ ├── data/                         ← raw/processed datasets
+ ├── models/                       ← ML models
  └── scripts/
       ├── prepare_core.py
       ├── check_wfp.py
