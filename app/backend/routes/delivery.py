@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session, select
-from models import Delivery
-from db import get_session
+from app.backend.models import Delivery
+from app.backend.db import get_session
 
 router = APIRouter()
 
@@ -32,3 +32,4 @@ def update_delivery_status(delivery_id: int, status: str, session: Session = Dep
     session.commit()
     session.refresh(delivery)
     return {"message": "Status updated", "delivery": delivery}
+
