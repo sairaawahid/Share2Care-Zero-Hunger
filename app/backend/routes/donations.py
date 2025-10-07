@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session, select
-from models import Donation
-from db import get_session
+from app.backend.models import Donation
+from app.backend.db import get_session
 
 router = APIRouter()
 
@@ -26,3 +26,4 @@ def get_donation(donation_id: int, session: Session = Depends(get_session)):
     if not donation:
         raise HTTPException(status_code=404, detail="Donation not found")
     return donation
+
