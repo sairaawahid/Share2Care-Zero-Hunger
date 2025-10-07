@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select, func
-from models import Donation, Community, Delivery
-from db import get_session
+from app.backend.models import Donation, Community, Delivery
+from app.backend.db import get_session
 
 router = APIRouter()
 
@@ -29,3 +29,4 @@ def trends_summary(session: Session = Depends(get_session)):
         "donations_over_time": len(donations),
         "deliveries_over_time": len(deliveries)
     }
+
