@@ -1,25 +1,31 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from sqlmodel import Session, select
 from models import User, UserLogin
-from database import users
+from db import get_session
 
-router = APIRouter() 
+router = APIRouter()
 
-# Mock auto-increment ID
-def get_next_user_id():
-    return len(users) + 1
 
 @router.post("/register")
-def register(user: User):
-    if any(u.email == user.email for u in users):
+def register(user: User, session: Session = Depends(get_session)):
+    # Check if email already exists
+    existing_user = session.exec(select(User).where(User.email == user.email)).first()
+    if existing_user:
         raise HTTPException(status_code=400, detail="Email already exists")
-    user.id = get_next_user_id()
-    users.append(user)
+
+    session.add(user)
+    session.commit()
+    session.refresh(user)
     return {"message": "User registered successfully", "user": user}
 
-@router.post("/login")
-def login(user_login: UserLogin):
-    for u in users:
-        if u.email == user_login.email and u.password == user_login.password:
-            return {"message": "Login successful", "user": u}
 
-    raise HTTPException(status_code=401, detail="Invalid credentials")
+@router.post("/login")
+def login(user_login: UserLogin, session: Session = Depends(get_session)):
+    db_user = session.exec(
+        select(User).where(User.email == user_login.email, User.password == user_login.password)
+    ).first()
+
+    if not db_user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    return {"message": "Login successful", "user": db_user}
