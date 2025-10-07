@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session, select
-from models import Community
-from db import get_session
+from app.backend.models import Community
+from app.backend.db import get_session
 
 router = APIRouter()
 
@@ -26,3 +26,4 @@ def get_community_needs(community_id: int, session: Session = Depends(get_sessio
     if not community:
         raise HTTPException(status_code=404, detail="Community not found")
     return {"urgent_needs": community.urgent_needs}
+
