@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session
-from models import PsychologySurvey
-from db import get_session
+from app.backend.models import PsychologySurvey
+from app.backend.db import get_session
 
 router = APIRouter()
 
@@ -21,3 +21,4 @@ def check_community_survey(survey: PsychologySurvey, session: Session = Depends(
 @router.get("/psychology/recommendations")
 def get_recommendations(user_id: int):
     return {"recommendations": f"Personalized recommendations for user {user_id}"}
+
