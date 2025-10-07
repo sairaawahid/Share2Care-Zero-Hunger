@@ -1,4 +1,3 @@
-# routes/auth.py
 from fastapi import APIRouter, HTTPException
 from models import User, UserLogin
 from database import users
@@ -22,4 +21,5 @@ def login(user_login: UserLogin):
     for u in users:
         if u.email == user_login.email and u.password == user_login.password:
             return {"message": "Login successful", "user": u}
+
     raise HTTPException(status_code=401, detail="Invalid credentials")
