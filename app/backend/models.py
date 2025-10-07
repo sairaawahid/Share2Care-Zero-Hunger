@@ -1,42 +1,60 @@
-from pydantic import BaseModel
+# app/backend/models.py
 from typing import Optional
+from sqlmodel import SQLModel, Field
 
-# User
-class User(BaseModel):
-    id: int
+# ---------- Users ----------
+class User(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     email: str
     password: str
-    role: str  # donor, volunteer, admin
+    role: str = "donor"  # donor, volunteer, ngo, admin
 
-class UserLogin(BaseModel):
+class UserCreate(SQLModel):
+    name: str
+    email: str
+    password: str
+    role: Optional[str] = "donor"
+
+class UserLogin(SQLModel):
     email: str
     password: str
 
-# Donation
-class Donation(BaseModel):
-    id: int
-    donor_id: int
+# ---------- Donations ----------
+class Donation(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    donor_id: Optional[int] = None
     food_type: str
-    quantity: int
+    quantity: str
     location: str
+    contact: Optional[str] = None
+    image_path: Optional[str] = None
+    status: str = "Available"
 
-# Community
-class Community(BaseModel):
-    id: int
+class DonationCreate(SQLModel):
+    donor_id: Optional[int] = None
+    food_type: str
+    quantity: str
+    location: str
+    contact: Optional[str] = None
+    image_path: Optional[str] = None
+
+# ---------- Community ----------
+class Community(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     population: int
     location: str
     urgent_needs: Optional[str] = None
 
-# Delivery
-class Delivery(BaseModel):
-    id: int
-    donor_id: int
-    community_id: int
-    status: str  # scheduled, picked_up, delivered
+# ---------- Delivery ----------
+class Delivery(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    donor_id: Optional[int] = None
+    community_id: Optional[int] = None
+    status: str = "scheduled"  # scheduled, picked_up, delivered
 
-# Psychology
-class PsychologySurvey(BaseModel):
+# ---------- Psychology / misc ----------
+class PsychologySurvey(SQLModel):
     user_id: int
     survey_data: dict
