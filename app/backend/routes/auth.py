@@ -8,7 +8,6 @@ from app.backend import models
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-
 @router.post("/register")
 def register(user_in: models.UserCreate, session: Session = Depends(get_session)):
     # check existing email
@@ -22,7 +21,6 @@ def register(user_in: models.UserCreate, session: Session = Depends(get_session)
     session.refresh(user)
     return {"message": "User registered", "user": user}
 
-
 @router.post("/login")
 def login(credentials: models.UserLogin, session: Session = Depends(get_session)):
     user = session.exec(select(models.User).where(models.User.email == credentials.email)).first()
@@ -30,3 +28,4 @@ def login(credentials: models.UserLogin, session: Session = Depends(get_session)
         raise HTTPException(status_code=401, detail="Invalid credentials")
     # simple response; expand with JWT later
     return {"message": "Login successful", "user_id": user.id, "role": user.role}
+
