@@ -3,7 +3,7 @@ from sqlmodel import SQLModel, create_engine, Session
 from typing import Generator
 from app.backend.config import PROJECT_DIR
 
-# DB file placed under app/backend/data/share2care.db
+# DB file placed under app/backend/data/share2care.database
 DB_DIR = Path(PROJECT_DIR) / "app" / "backend" / "data"
 DB_DIR.mkdir(parents=True, exist_ok=True)
 DB_FILE = DB_DIR / "share2care.db"
@@ -24,4 +24,5 @@ def init_db() -> None:
 def get_session() -> Generator[Session, None, None]:
     with Session(engine) as session:
         yield session
+
 
