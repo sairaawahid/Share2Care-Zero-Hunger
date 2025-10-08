@@ -1,24 +1,19 @@
-from pathlib import Path
+# app/backend/database.py
 from sqlmodel import SQLModel, create_engine, Session
-from typing import Generator
-from app.backend.config import PROJECT_DIR
+import os
 
-# DB file: app/backend/data/share2care.db
-DB_DIR = Path(PROJECT_DIR) / "app" / "backend" / "data"
-DB_DIR.mkdir(parents=True, exist_ok=True)
-DB_FILE = DB_DIR / "share2care.db"
+# SQLite database file path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'share2care.db')}"
 
-DATABASE_URL = f"sqlite:///{DB_FILE}"
-
-# create engine (check_same_thread False to work with FastAPI)
+# Create SQLAlchemy engine
 engine = create_engine(DATABASE_URL, echo=False, connect_args={"check_same_thread": False})
 
-def init_db() -> None:
-    """Create DB tables. Import models before calling this."""
+# Initialize DB schema
+def init_db():
     SQLModel.metadata.create_all(engine)
 
-
-def get_session() -> Generator[Session, None, None]:
-    """Dependency: yield a SQLModel Session."""
+# Dependency for FastAPI routes
+def get_session():
     with Session(engine) as session:
         yield session
