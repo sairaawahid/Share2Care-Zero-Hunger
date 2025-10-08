@@ -1,5 +1,6 @@
+# app/backend/main.py
 from fastapi import FastAPI
-from app.backend.database import init_db
+from fastapi.middleware.cors import CORSMiddleware
 from app.backend.routes import (
     auth,
     donations,
@@ -7,26 +8,36 @@ from app.backend.routes import (
     delivery,
     analytics,
     psychology,
-    admin,
+    admin
+)
+from app.backend.database import init_db
+
+app = FastAPI(title="Share2Care – Zero Hunger API")
+
+# Enable CORS for frontend communication
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Replace with your frontend domain for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-app = FastAPI(title="Share2Care – Zero Hunger Backend")
-
-# Initialize DB tables on startup
-@app.on_event("startup")
-def on_startup():
-    # models must already be importable; init_db uses SQLModel metadata
-    init_db()
-
+# Root endpoint
 @app.get("/")
 def read_root():
     return {"message": "Welcome to Share2Care – Zero Hunger API"}
 
-# Include routers under /api prefix
-app.include_router(auth.router)
-app.include_router(donations.router)
-app.include_router(communities.router)
-app.include_router(delivery.router)
-app.include_router(analytics.router)
-app.include_router(psychology.router)
-app.include_router(admin.router)
+# Initialize database on startup
+@app.on_event("startup")
+def on_startup():
+    init_db()
+
+# Include all route modules with /api prefix
+app.include_router(auth.router, prefix="/api")
+app.include_router(donations.router, prefix="/api")
+app.include_router(communities.router, prefix="/api")
+app.include_router(delivery.router, prefix="/api")
+app.include_router(analytics.router, prefix="/api")
+app.include_router(psychology.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
