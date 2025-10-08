@@ -1,19 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import select
+from fastapi import APIRouter, Depends
+from sqlmodel import select, Session
 from app.backend.database import get_session
-from sqlmodel import Session
 from app.backend import models
 
 router = APIRouter(prefix="/api/admin", tags=["Admin"])
 
-@router.get("/users")
+
+@router.get("/users", response_model=list[models.UserRead])
 def list_users(session: Session = Depends(get_session)):
     return session.exec(select(models.User)).all()
 
-@router.get("/donations")
+
+@router.get("/donations", response_model=list[models.DonationRead])
 def list_donations(session: Session = Depends(get_session)):
     return session.exec(select(models.Donation)).all()
 
-@router.get("/communities")
+
+@router.get("/communities", response_model=list[models.CommunityRead])
 def list_communities(session: Session = Depends(get_session)):
     return session.exec(select(models.Community)).all()
