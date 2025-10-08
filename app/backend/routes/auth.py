@@ -8,6 +8,7 @@ from app.backend import models
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 @router.post("/register")
 def register(user_in: models.UserCreate, session: Session = Depends(get_session)):
     # check existing email
@@ -20,6 +21,7 @@ def register(user_in: models.UserCreate, session: Session = Depends(get_session)
     session.commit()
     session.refresh(user)
     return {"message": "User registered", "user": user}
+
 
 @router.post("/login")
 def login(credentials: models.UserLogin, session: Session = Depends(get_session)):
