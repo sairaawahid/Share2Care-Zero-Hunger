@@ -1,34 +1,19 @@
-from fastapi import APIRouter, HTTPException, Depends
-from sqlmodel import Session, select
-from app.backend.models import User, Donation, Community
-from app.backend.db import get_session
+from fastapi import APIRouter, Depends, HTTPException
+from sqlmodel import select
+from app.backend.database import get_session
+from sqlmodel import Session
+from app.backend import models
 
-router = APIRouter()
+router = APIRouter(prefix="/api/admin", tags=["Admin"])
 
-
-@router.get("/admin/users")
+@router.get("/users")
 def list_users(session: Session = Depends(get_session)):
-    users = session.exec(select(User)).all()
-    return users
+    return session.exec(select(models.User)).all()
 
-
-@router.delete("/admin/users/{user_id}")
-def delete_user(user_id: int, session: Session = Depends(get_session)):
-    user = session.get(User, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    session.delete(user)
-    session.commit()
-    return {"message": "User deleted"}
-
-
-@router.get("/admin/donations")
+@router.get("/donations")
 def list_donations(session: Session = Depends(get_session)):
-    donations = session.exec(select(Donation)).all()
-    return donations
+    return session.exec(select(models.Donation)).all()
 
-
-@router.get("/admin/communities")
+@router.get("/communities")
 def list_communities(session: Session = Depends(get_session)):
-    communities = session.exec(select(Community)).all()
-    return communities
+    return session.exec(select(models.Community)).all()
