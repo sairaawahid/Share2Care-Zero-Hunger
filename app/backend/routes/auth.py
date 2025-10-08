@@ -1,32 +1,30 @@
-from fastapi import APIRouter, HTTPException, Depends
-from sqlmodel import Session, select
-from app.backend.models import User, UserLogin
-from app.backend.db import get_session
+from fastapi import APIRouter, Depends, HTTPException
+from passlib.context import CryptContext
+from sqlmodel import select
+from sqlmodel import Session
+from app.backend.database import get_session
+from app.backend import models
 
-router = APIRouter()
-
+router = APIRouter(prefix="/api/auth", tags=["Auth"])
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 @router.post("/register")
-def register(user: User, session: Session = Depends(get_session)):
-    # Check if email already exists
-    existing_user = session.exec(select(User).where(User.email == user.email)).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already exists")
-
+def register(user_in: models.UserCreate, session: Session = Depends(get_session)):
+    # check existing email
+    existing = session.exec(select(models.User).where(models.User.email == user_in.email)).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    hashed = pwd_context.hash(user_in.password)
+    user = models.User(name=user_in.name, email=user_in.email, password=hashed, role=user_in.role or "donor")
     session.add(user)
     session.commit()
     session.refresh(user)
-    return {"message": "User registered successfully", "user": user}
-
+    return {"message": "User registered", "user": user}
 
 @router.post("/login")
-def login(user_login: UserLogin, session: Session = Depends(get_session)):
-    db_user = session.exec(
-        select(User).where(User.email == user_login.email, User.password == user_login.password)
-    ).first()
-
-    if not db_user:
+def login(credentials: models.UserLogin, session: Session = Depends(get_session)):
+    user = session.exec(select(models.User).where(models.User.email == credentials.email)).first()
+    if not user or not pwd_context.verify(credentials.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    return {"message": "Login successful", "user": db_user}
-
+    # simple response; expand with JWT later
+    return {"message": "Login successful", "user_id": user.id, "role": user.role}
