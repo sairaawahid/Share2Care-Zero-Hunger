@@ -10,3 +10,4 @@ app/data/processed/*
 !app/data/processed/.gitkeep
 node_modules/
 *.cache
+*.db
