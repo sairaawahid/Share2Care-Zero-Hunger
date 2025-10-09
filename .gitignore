@@ -1,13 +1,42 @@
+# OS & IDE files
 .DS_Store
+*.log
+*.cache
+*.tmp
 __pycache__/
 *.pyc
-.venv/
-.env
 .ipynb_checkpoints/
+.vscode/
+.idea/
+
+# Virtual environments
+venv/
+.venv/
+
+# Environment variables
+.env
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Data folders
 app/data/raw/*
 app/data/processed/*
 !app/data/raw/.gitkeep
 !app/data/processed/.gitkeep
+
+# Node or frontend cache
 node_modules/
-*.cache
-*.db
+
+# Alembic SQLite migrations or cache
+alembic/*.log
+
+# Streamlit cache
+.streamlit/
+
+# Byte-compiled and build artifacts
+dist/
+build/
+*.egg-info/
