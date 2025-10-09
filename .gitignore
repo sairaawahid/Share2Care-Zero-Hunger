@@ -1,42 +1,55 @@
-# OS & IDE files
-.DS_Store
-*.log
-*.cache
-*.tmp
-__pycache__/
-*.pyc
-.ipynb_checkpoints/
-.vscode/
-.idea/
+# Core API Framework
+fastapi==0.110.2
+uvicorn==0.29.0
+pydantic==2.7.1
+python-multipart==0.0.9
+fastapi-cors==0.0.6
+python-dotenv==1.0.1
 
-# Virtual environments
-venv/
-.venv/
+# Database + ORM
+sqlmodel==0.0.14
+sqlalchemy==2.0.29
+alembic==1.13.2
+psycopg2-binary==2.9.9  # explicitly pinned for stability
 
-# Environment variables
-.env
+# Geo & Mapping
+geopandas==0.14.3
+geopy==2.4.1
+folium==0.16.0
 
-# Databases
-*.db
-*.sqlite
-*.sqlite3
+# Streamlit Frontend (for visualization dashboard)
+streamlit==1.36.0
 
-# Data folders
-app/data/raw/*
-app/data/processed/*
-!app/data/raw/.gitkeep
-!app/data/processed/.gitkeep
+# Machine Learning & AI
+torch==2.3.0
+transformers==4.39.3
+scikit-learn==1.4.2
+tensorflow==2.16.1
+numpy==1.26.4
+pandas==2.2.2
+pillow==10.3.0
 
-# Node or frontend cache
-node_modules/
+# Prophet Forecasting
+pystan==2.19.1.1
+prophet==1.1.5
 
-# Alembic SQLite migrations or cache
-alembic/*.log
+# Visualization & Analytics
+matplotlib==3.9.0
+seaborn==0.13.2
+plotly==5.22.0
 
-# Streamlit cache
-.streamlit/
+# Image Classification
+opencv-python==4.9.0.80
 
-# Byte-compiled and build artifacts
-dist/
-build/
-*.egg-info/
+# Sentiment & Psychology
+nltk==3.8.1
+textblob==0.17.1
+joblib==1.4.0
+
+# Serialization & JSON
+orjson==3.10.3
+
+# Scheduler & Utilities
+apscheduler==3.10.4
+requests==2.32.2
+passlib[bcrypt]==1.7.4
