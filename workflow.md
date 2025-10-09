@@ -1,4 +1,4 @@
-## 🚀 Share2Care – App Workflow & Data Flow (Frontend-Focused)
+## Share2Care – App Workflow & Data Flow (Frontend-Focused)
 
 ```mermaid
 flowchart TD
