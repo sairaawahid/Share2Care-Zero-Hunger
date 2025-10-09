@@ -1,102 +1,70 @@
-## 🧩 Share2Care – Zero Hunger  
-### Unified System Overview and Data Flow Diagram
+## 🚀 Share2Care – App Workflow & Data Flow (Frontend-Focused)
 
 ```mermaid
 flowchart TD
     %% ============================================================
-    %% SHARE2CARE – ZERO HUNGER : UNIFIED SYSTEM OVERVIEW + DATA FLOW
+    %% SHARE2CARE – FRONTEND + DATA FLOW DIAGRAM (Simplified)
     %% ============================================================
 
-    %% === USERS LAYER ===
-    subgraph U[USER ROLES]
-        U1[Donor: Register or Login; Add Surplus Food Donation; Track Deliveries]
-        U2[NGO or Volunteer: View and Claim Donations; Deliver to Flood-Affected Communities]
-        U3[Admin: Approve NGOs; View Analytics and AI Insights]
+    %% === USERS ===
+    subgraph U[User Roles]
+        U1[👤 Donor]
+        U2[🤝 NGO / Volunteer]
+        U3[🛠️ Admin]
     end
 
-    %% === FRONTEND LAYER ===
-    subgraph F[FRONTEND – Streamlit Web App]
-        F1[Interactive UI Tabs: Map; Donor Dashboard; NGO Dashboard; Deliveries; Analytics; AI Insights; Psychology; Admin Panel]
-        F2[API Integration Layer: Calls Backend Endpoints via FastAPI; Handles Authentication and Session State]
-        F3[Real-Time Maps and Visuals: Geocoded Donations; Food Insecurity Heatmaps]
+    %% === FRONTEND ===
+    subgraph F[🌐 Streamlit Frontend]
+        F1[Home & Authentication]
+        F2[Dashboard (Map, Donations, Analytics)]
+        F3[Donation & Delivery Forms]
+        F4[AI Insights & Visual Reports]
     end
 
-    %% === BACKEND LAYER ===
-    subgraph B[BACKEND – FastAPI plus SQLModel]
-        direction TB
-        B1[Auth Routes: /api/auth → Register or Login]
-        B2[Donations Routes: /api/donations → Add or List Donations]
-        B3[Communities Routes: /api/communities → View Needs or Mark Urgent]
-        B4[Delivery Routes: /api/delivery → Claim and Schedule]
-        B5[Analytics Routes: /api/analytics → Food Price Trends and Forecasts]
-        B6[Psychology Routes: /api/psychology → Sentiment and Motivation]
-        B7[Admin Routes: /api/admin → System Oversight]
-        B8[Workflow Logic: donor-ngo-workflow.py and services.py; Business rules linking donors, NGOs, and deliveries]
+    %% === BACKEND ===
+    subgraph B[⚙️ FastAPI Backend]
+        B1[(Auth API)]
+        B2[(Donations API)]
+        B3[(Delivery API)]
+        B4[(Analytics API)]
     end
 
-    %% === DATABASE LAYER ===
-    subgraph D[DATABASE – PostgreSQL via SQLModel ORM]
-        D1[(users)]
-        D2[(donations)]
-        D3[(communities)]
-        D4[(deliveries)]
-        D5[(claims)]
-        D6[(analytics_cache)]
+    %% === DATABASE ===
+    subgraph D[(🗄️ PostgreSQL Database)]
+        D1[(Users)]
+        D2[(Donations)]
+        D3[(Deliveries)]
+        D4[(Communities)]
     end
 
-    %% === AI & ML LAYER ===
-    subgraph M[AI and ML Modules]
-        M1[DistilBERT: Sentiment and Motivation Analysis → Psychology Route]
-        M2[Prophet or ARIMA: Food Price Forecasting → Analytics Route]
-        M3[MobileNetV2: Food Image Tagging → Donations Route]
-        M4[GeoML Heatmaps: Food Insecurity Mapping → Map Visualization]
-    end
+    %% === BASIC DATA FLOW ===
+    %% Users → Frontend
+    U1 -->|Register / Login| F1
+    U1 -->|Add Donation| F3
+    U2 -->|View & Claim Donations| F2
+    U3 -->|View Reports & Analytics| F4
 
-    %% === STORAGE & FILE SYSTEM ===
-    subgraph S[STORAGE LAYER]
-        S1[PostgreSQL Cloud Volume or Persistent Storage]
-        S2[donation_images Directory]
-    end
+    %% Frontend → Backend
+    F1 -->|POST /api/auth| B1
+    F3 -->|POST /api/donations| B2
+    F2 -->|GET /api/donations| B2
+    F2 -->|GET /api/delivery| B3
+    F4 -->|GET /api/analytics| B4
 
-    %% === DATA FLOW ===
-    %% USER -> FRONTEND
-    U1 -->|Adds Donation| F1
-    U2 -->|Claims or Views| F1
-    U3 -->|Monitors Data| F1
-
-    %% FRONTEND -> BACKEND
-    F2 -->|RESTful API Calls returning JSON| B
-    F1 --> F2
-
-    %% BACKEND ROUTING
+    %% Backend → Database
     B1 --> D1
     B2 --> D2
     B3 --> D3
+    B4 --> D2
     B4 --> D4
-    B5 --> D6
-    B6 --> D1
-    B7 --> D1
-    B8 --> D2
-    B8 --> D4
-    B8 --> D5
 
-    %% BACKEND ↔ AI MODULES
-    B2 --> M3
-    B5 --> M2
-    B6 --> M1
-    B3 --> M4
-    M1 --> F1
-    M2 --> F1
-    M3 --> F1
-    M4 --> F3
+    %% Database → Backend → Frontend → Users
+    D -->|Returns Data via APIs| B
+    B -->|JSON Responses| F
+    F -->|Visualizes Data| U
 
-    %% BACKEND ↔ DATABASE
-    B -->|SQLModel ORM Queries| D
-    D -->|Stores Persistent Data| S1
-
-    %% BACKEND ↔ STORAGE
-    B2 -->|Upload or Serve Food Images| S2
-
-    %% FRONTEND VISUAL OUTPUTS
-    F3 -->|Displays AI and Analytics Insights| F1
-
+    %% === NOTES ===
+    %% U = Users interact with Streamlit Frontend
+    %% F = Frontend communicates with FastAPI via REST APIs
+    %% B = Backend performs CRUD operations using SQLModel ORM
+    %% D = Data is stored and retrieved from PostgreSQL
