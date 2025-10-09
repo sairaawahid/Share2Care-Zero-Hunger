@@ -5,34 +5,34 @@ flowchart TD
     %% ============================================================
 
     %% === USERS LAYER ===
-    subgraph U[👥 USER ROLES]
+    subgraph U[USER ROLES]
         U1[Donor\n• Register/Login\n• Add Surplus Food Donation\n• Track Deliveries]
         U2[NGO / Volunteer\n• View & Claim Donations\n• Deliver to Flood-Affected Communities]
         U3[Admin\n• Approve NGOs\n• View Analytics & AI Insights]
     end
 
     %% === FRONTEND LAYER ===
-    subgraph F[🖥️ FRONTEND – Streamlit Web App]
-        F1[Interactive UI Tabs\n1️⃣ Map\n2️⃣ Donor Dashboard\n3️⃣ NGO Dashboard\n4️⃣ Deliveries\n5️⃣ Analytics\n6️⃣ AI Insights\n7️⃣ Psychology\n8️⃣ Admin Panel]
+    subgraph F[FRONTEND – Streamlit Web App]
+        F1[Interactive UI Tabs\n1️ Map\n2️ Donor Dashboard\n3️ NGO Dashboard\n4️ Deliveries\n5️ Analytics\n6️ AI Insights\n7️ Psychology\n8️ Admin Panel]
         F2[API Integration Layer\n• Calls Backend Endpoints (FastAPI)\n• Handles Auth & Session State]
         F3[Real-Time Maps & Visuals\n• Geocoded Donations\n• Food Insecurity Heatmaps]
     end
 
     %% === BACKEND LAYER ===
-    subgraph B[⚙️ BACKEND – FastAPI + SQLModel]
+    subgraph B[BACKEND – FastAPI + SQLModel]
         direction TB
-        B1[Auth Routes\n🔑 /api/auth → Register/Login]
-        B2[Donations Routes\n🍛 /api/donations → Add/List Donations]
-        B3[Communities Routes\n🏘️ /api/communities → View Needs, Mark Urgent]
-        B4[Delivery Routes\n🚚 /api/delivery → Claim & Schedule]
-        B5[Analytics Routes\n📈 /api/analytics → Food Price Trends & Forecasts]
-        B6[Psychology Routes\n🧠 /api/psychology → Sentiment & Motivation]
-        B7[Admin Routes\n⚙️ /api/admin → System Oversight]
-        B8[Workflow Logic\n🔄 donor-ngo-workflow.py + services.py\n• Business rules linking donors ↔ NGOs ↔ deliveries]
+        B1[Auth Routes\n /api/auth → Register/Login]
+        B2[Donations Routes\n /api/donations → Add/List Donations]
+        B3[Communities Routes\n /api/communities → View Needs, Mark Urgent]
+        B4[Delivery Routes\n /api/delivery → Claim & Schedule]
+        B5[Analytics Routes\n /api/analytics → Food Price Trends & Forecasts]
+        B6[Psychology Routes\n /api/psychology → Sentiment & Motivation]
+        B7[Admin Routes\n /api/admin → System Oversight]
+        B8[Workflow Logic\n donor-ngo-workflow.py + services.py\n• Business rules linking donors ↔ NGOs ↔ deliveries]
     end
 
     %% === DATABASE LAYER ===
-    subgraph D[🗄️ DATABASE – PostgreSQL (via SQLModel ORM)]
+    subgraph D[DATABASE – PostgreSQL (via SQLModel ORM)]
         D1[(users)]
         D2[(donations)]
         D3[(communities)]
@@ -42,7 +42,7 @@ flowchart TD
     end
 
     %% === AI & ML LAYER ===
-    subgraph M[🤖 AI + ML Modules]
+    subgraph M[AI + ML Modules]
         M1[DistilBERT\nSentiment & Motivation Analysis\n→ Psychology Route]
         M2[Prophet / ARIMA\nFood Price Forecasting\n→ Analytics Route]
         M3[MobileNetV2\nFood Image Tagging\n→ Donations Route]
@@ -50,7 +50,7 @@ flowchart TD
     end
 
     %% === STORAGE & FILE SYSTEM ===
-    subgraph S[💾 Storage Layer]
+    subgraph S[Storage Layer]
         S1[PostgreSQL DB File / Cloud Volume]
         S2[donation_images/ Directory]
     end
