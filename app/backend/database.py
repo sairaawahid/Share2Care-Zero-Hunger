@@ -1,21 +1,31 @@
-from sqlmodel import SQLModel, create_engine
-from dotenv import load_dotenv
+# app/backend/database.py
 import os
+from pathlib import Path
+from typing import Generator
+from dotenv import load_dotenv
+from sqlmodel import SQLModel, create_engine, Session
 
-# Load .env if it exists (safe even if missing)
+# Load .env (if present)
 load_dotenv()
 
-# Try to read DATABASE_URL from environment
-database_url = os.getenv("DATABASE_URL")
+# Read DATABASE_URL from env; fallback to local sqlite for dev
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/share2care.db")
 
-# If no .env or env variable found, fallback to SQLite
-if not database_url:
-    database_url = "sqlite:///./share2care_local.db"
+# Ensure directory exists for SQLite fallback
+if DATABASE_URL.startswith("sqlite"):
+    # create folder for the sqlite file if necessary
+    sqlite_path = Path(DATABASE_URL.replace("sqlite:///", ""))
+    sqlite_path.parent.mkdir(parents=True, exist_ok=True)
 
-# Engine setup
-connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
-engine = create_engine(database_url, echo=True, connect_args=connect_args)
+# Sqlite requires connect_args; Postgres does not
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+engine = create_engine(DATABASE_URL, echo=False, connect_args=connect_args)
 
-# Initialize database models
-def init_db():
+def init_db() -> None:
+    """Create tables from SQLModel models (call on startup)."""
     SQLModel.metadata.create_all(engine)
+
+def get_session() -> Generator[Session, None, None]:
+    """Dependency to use in FastAPI routes."""
+    with Session(engine) as session:
+        yield session
