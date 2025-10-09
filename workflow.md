@@ -62,32 +62,6 @@ flowchart TD
     D -->|Return Data via APIs| B
     B -->|JSON Responses| F
     F -->|Visualizes Data| U
-
-### Request Sequence Flow (Per Action)
-
-```mermaid
-sequenceDiagram
-    participant Donor
-    participant Frontend
-    participant API
-    participant Database
-    participant NGO
-
-    Donor->>Frontend: Add Donation Details
-    Frontend->>API: POST /api/donations
-    API->>Database: Save donation record
-    Database-->>API: Return donation ID
-    API-->>Frontend: Confirm submission
-    Frontend-->>Donor: Show "Donation Added" message
-
-    NGO->>Frontend: View Available Donations
-    Frontend->>API: GET /api/donations
-    API->>Database: Fetch unclaimed donations
-    Database-->>API: Return donation list
-    API-->>Frontend: Send donation data
-    Frontend-->>NGO: Display donations map/list
-
-    NGO->>Frontend: Claim Donation
     Frontend->>API: PUT /api/donations/{id}/claim
     API->>Database: Update status = "Claimed"
     Database-->>API: Confirm update
