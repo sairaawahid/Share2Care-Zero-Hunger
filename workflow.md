@@ -63,7 +63,7 @@ flowchart TD
     B -->|JSON Responses| F
     F -->|Visualizes Data| U
 
-### 🔄 Request Sequence Flow (Per Action)
+### Request Sequence Flow (Per Action)
 
 ```mermaid
 sequenceDiagram
