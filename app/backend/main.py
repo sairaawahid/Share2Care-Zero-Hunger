@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.backend.db import init_db
+from app.backend.database import init_db
 from app.backend.routes import (
     auth,
     donations,
@@ -34,3 +34,4 @@ app.include_router(delivery.router)
 app.include_router(analytics.router)
 app.include_router(psychology.router)
 app.include_router(admin.router)
+
