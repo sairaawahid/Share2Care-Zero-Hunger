@@ -1,4 +1,4 @@
-## Share2Care – App Workflow & Data Flow (Frontend-Focused)
+## 🚀 Share2Care – App Workflow & Data Flow (Frontend-Focused)
 
 ```mermaid
 flowchart TD
@@ -62,8 +62,3 @@ flowchart TD
     D -->|Return Data via APIs| B
     B -->|JSON Responses| F
     F -->|Visualizes Data| U
-    Frontend->>API: PUT /api/donations/{id}/claim
-    API->>Database: Update status = "Claimed"
-    Database-->>API: Confirm update
-    API-->>Frontend: Notify claim success
-    Frontend-->>Donor: "Your donation has been claimed!"
