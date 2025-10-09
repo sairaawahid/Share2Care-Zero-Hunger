@@ -94,8 +94,8 @@ def api_submit_donation(donor_name, contact, location, food_desc, mood=None, ima
     # If backend expects different keys, adjust accordingly.
     payload = {
         "donor_id": None,             # frontend does not hold persistent user id (optional)
-        "food_item": food_desc,       # many backend variants use 'food_item' or 'food_type'
-        "quantity": "",               # optional
+        "food_item": food_desc,    
+        "quantity": "",               
         "location": location,
         "contact": contact or "",
         "image_path": None,
