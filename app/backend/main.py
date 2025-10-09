@@ -1,6 +1,5 @@
-# app/backend/main.py
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from app.backend.db import init_db
 from app.backend.routes import (
     auth,
     donations,
@@ -8,36 +7,30 @@ from app.backend.routes import (
     delivery,
     analytics,
     psychology,
-    admin
-)
-from app.backend.database import init_db
-
-app = FastAPI(title="Share2Care – Zero Hunger API")
-
-# Enable CORS for frontend communication
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Replace with your frontend domain for production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    admin,
 )
 
-# Root endpoint
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to Share2Care – Zero Hunger API"}
+app = FastAPI(
+    title="Share2Care – Zero Hunger Backend",
+    description="A full backend for connecting donors, NGOs, and communities to reduce food insecurity.",
+    version="1.0.0",
+)
 
-# Initialize database on startup
+# Startup Event
 @app.on_event("startup")
 def on_startup():
     init_db()
 
-# Include all route modules with /api prefix
-app.include_router(auth.router, prefix="/api")
-app.include_router(donations.router, prefix="/api")
-app.include_router(communities.router, prefix="/api")
-app.include_router(delivery.router, prefix="/api")
-app.include_router(analytics.router, prefix="/api")
-app.include_router(psychology.router, prefix="/api")
-app.include_router(admin.router, prefix="/api")
+# Root Endpoint
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to Share2Care – Zero Hunger API"}
+
+# Route Inclusions
+app.include_router(auth.router)
+app.include_router(donations.router)
+app.include_router(communities.router)
+app.include_router(delivery.router)
+app.include_router(analytics.router)
+app.include_router(psychology.router)
+app.include_router(admin.router)
