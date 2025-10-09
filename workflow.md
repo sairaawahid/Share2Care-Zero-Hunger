@@ -10,7 +10,7 @@ flowchart TD
     end
 
     %% === FRONTEND ===
-    subgraph F[Streamlit Frontend]
+    subgraph F[Frontend]
         F1[Home & Authentication]
         F2[Dashboard - Map, Donations, Analytics]
         F3[Donation & Delivery Forms]
