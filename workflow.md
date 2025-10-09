@@ -1,7 +1,5 @@
 ## 🚀 Share2Care – App Workflow & Data Flow (Frontend-Focused)
 
-### 🧩 High-Level Data Flow
-
 ```mermaid
 flowchart TD
     %% === USERS ===
