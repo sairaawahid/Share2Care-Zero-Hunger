@@ -14,7 +14,7 @@ def init_db():
     """Creates all tables if they don’t exist."""
     from app.backend import models  # local import to avoid circular dependency
     SQLModel.metadata.create_all(engine)
-    print("✅ Database initialized and tables created.")
+    print("Database initialized and tables created.")
 
 # Session Dependency
 @contextmanager
@@ -22,3 +22,4 @@ def get_session():
     """Yields a new SQLAlchemy session (used by FastAPI Depends)."""
     with Session(engine) as session:
         yield session
+
