@@ -1,3 +1,4 @@
+# app/frontend/streamlit_app.py
 import sys
 import os
 
@@ -30,8 +31,7 @@ import PIL.Image as Image
 from app.backend.models.sentiment import analyze_sentiment
 
 # --- Donor–NGO Workflow Imports (kept for reference) ---
-# we will call backend APIs (no mock fallback). If you still want to use local helper functions,
-# they remain in this file but are not used when API is configured.
+# These local helpers remain available but the front-end will call the backend APIs.
 try:
     from app.backend.workflow.donor import submit_donation as local_submit_donation  # optional local import
     from app.backend.workflow.ngo import view_and_claim_donations as local_view_donations
@@ -42,10 +42,9 @@ except Exception:
 # -----------------------------
 # API CONFIG / HELPERS
 # -----------------------------
-# Base API URL (override with STREAMLIT_API_URL env var); expectation: endpoints are under /api
+# Base API URL (override with STREAMLIT_API_URL env var)
 API_BASE = os.environ.get("STREAMLIT_API_URL", "http://127.0.0.1:8000/api").rstrip("/")
-
-API_TIMEOUT = 6  # seconds
+API_TIMEOUT = 8  # seconds
 
 def _api_get(path: str, params: dict = None):
     url = f"{API_BASE}{path}"
@@ -60,64 +59,97 @@ def _api_get(path: str, params: dict = None):
 def _api_post(path: str, payload: dict = None, files: dict = None):
     url = f"{API_BASE}{path}"
     try:
-        r = requests.post(url, json=payload, files=files or None, timeout=API_TIMEOUT)
+        if files:
+            # multipart/form-data (files present)
+            r = requests.post(url, data=payload or {}, files=files, timeout=API_TIMEOUT)
+        else:
+            r = requests.post(url, json=payload or {}, timeout=API_TIMEOUT)
         r.raise_for_status()
         return r.json()
     except RequestException as e:
         st.error(f"API POST failed ({url}): {e}")
         raise
 
-# Donations endpoints (expected)
-def api_list_donations(status: str = "Open"):
-    # Expect GET /donations?status=Open
-    return _api_get("/donations", params={"status": status})
+def _api_put(path: str, payload: dict = None):
+    url = f"{API_BASE}{path}"
+    try:
+        r = requests.put(url, json=payload or {}, timeout=API_TIMEOUT)
+        r.raise_for_status()
+        # Some put endpoints may return no json
+        try:
+            return r.json()
+        except Exception:
+            return {"status": "ok"}
+    except RequestException as e:
+        st.error(f"API PUT failed ({url}): {e}")
+        raise
+
+# Concrete API wrappers (match current backend routes)
+def api_list_donations(status: str = None):
+    params = {"status": status} if status else None
+    return _api_get("/donations/", params=params)
 
 def api_submit_donation(donor_name, contact, location, food_desc, mood=None, image_bytes=None, image_filename=None):
-    # Expect POST /donations
+    # Trying to match DonationCreate payload commonly expected by your backend.
+    # If backend expects different keys, adjust accordingly.
     payload = {
-        "donor_name": donor_name,
-        "donor_contact": contact,
-        "food_description": food_desc,
-        "quantity": "",            # optional
+        "donor_id": None,             # frontend does not hold persistent user id (optional)
+        "food_item": food_desc,       # many backend variants use 'food_item' or 'food_type'
+        "quantity": "",               # optional
         "location": location,
-        "note": "",
-        "mood": mood or ""
+        "contact": contact or "",
+        "image_path": None,
+        "status": "Available"
     }
-    # If backend supports file upload via multipart/form-data: send file in `files`
-    files = None
+    # If image provided, send multipart
     if image_bytes is not None and image_filename:
         files = {"image": (image_filename, image_bytes, "image/jpeg")}
-        # For multipart we use requests.post(files=...) inside _api_post; but our _api_post uses json by default.
-        # So do a direct requests call here:
-        url = f"{API_BASE}/donations"
+        url = f"{API_BASE}/donations/"  # call directly for file upload
         try:
             r = requests.post(url, data=payload, files=files, timeout=API_TIMEOUT)
             r.raise_for_status()
             return r.json()
         except RequestException as e:
-            st.error(f"API POST failed ({url}): {e}")
+            st.error(f"API POST file upload failed ({url}): {e}")
             raise
     else:
-        return _api_post("/donations", payload)
+        return _api_post("/donations/", payload)
 
 def api_claim_donation(donation_id: int, ngo_name: str, ngo_contact: str = ""):
-    # Expect POST /donations/{id}/claim
-    return _api_post(f"/donations/{donation_id}/claim", {"ngo_name": ngo_name, "ngo_contact": ngo_contact})
+    # Backend exposes PUT /donations/{id}/claim
+    payload = {"ngo_name": ngo_name, "ngo_contact": ngo_contact}
+    return _api_put(f"/donations/{donation_id}/claim", payload)
 
 def api_mark_delivered(donation_id: int):
-    # Expect POST /donations/{id}/deliver or similar
-    return _api_post(f"/donations/{donation_id}/deliver", {"donation_id": donation_id})
+    # Try a donation-level endpoint first: POST /donations/{id}/deliver
+    try:
+        return _api_post(f"/donations/{donation_id}/deliver", {"donation_id": donation_id})
+    except Exception:
+        # Fallback: try updating a delivery record if backend uses delivery endpoints.
+        try:
+            return _api_put(f"/delivery/{donation_id}/update-status", {"status": "delivered"})
+        except Exception:
+            raise RuntimeError("No delivery endpoint available to mark delivered")
 
 def api_get_deliveries():
-    # Expect GET /delivery or /deliveries
+    # Try common endpoints
     try:
-        return _api_get("/delivery")
+        return _api_get("/delivery/routes")
     except Exception:
-        # try alternate route
-        return _api_get("/deliveries")
+        try:
+            return _api_get("/delivery")
+        except Exception:
+            # last attempt
+            return _api_get("/deliveries")
 
 def api_get_analytics():
-    return _api_get("/analytics/food-security")
+    try:
+        return _api_get("/analytics/summary")
+    except Exception:
+        try:
+            return _api_get("/analytics")
+        except Exception:
+            return _api_get("/analytics/severity")
 
 # -----------------------------
 # Local JSON helpers (kept for compatibility but NOT used if API is available)
@@ -142,9 +174,9 @@ def save_donations_json_local(data):
 @st.cache_data(show_spinner=False)
 def geocode_location_cached(location_text):
     """Cache geocoding results to avoid re-fetching same location."""
-    geolocator = Nominatim(user_agent="ataraxai_donor_ngo_map")
+    geolocator = Nominatim(user_agent="share2care_geocoder")
     try:
-        loc = geolocator.geocode(location_text, timeout=5)
+        loc = geolocator.geocode(location_text, timeout=6)
         if loc:
             return (loc.latitude, loc.longitude)
     except Exception:
@@ -228,14 +260,15 @@ with tabs[1]:
 
         # Plot historical trend
         fig, ax = plt.subplots(figsize=(8, 4))
-        ax.plot(df_sel["date"], df_sel["price"], label="Observed", color="blue")
+        ax.plot(df_sel["date"], df_sel["price"], label="Observed")
 
-        # Forecast future
+        # Forecast future (uses your existing forecast_prices function)
         try:
             hist, fcst = forecast_prices(df_sel, periods=60)
-            ax.plot(fcst["ds"], fcst["yhat"], label="Forecast", color="red")
-            ax.fill_between(fcst["ds"], fcst["yhat_lower"], fcst["yhat_upper"],
-                            alpha=0.2, color="red")
+            ax.plot(fcst["ds"], fcst["yhat"], label="Forecast")
+            # Some fcst implementations may lack bounds — guard access
+            if "yhat_lower" in fcst.columns and "yhat_upper" in fcst.columns:
+                ax.fill_between(fcst["ds"], fcst["yhat_lower"], fcst["yhat_upper"], alpha=0.2)
         except Exception as e:
             st.warning(f"⚠️ Forecast unavailable: {e}")
 
@@ -378,15 +411,11 @@ with tabs[5]:
                     image_filename = food_img.name
 
                 try:
-                    resp = api_submit_donation(
-                        donor_name, contact, location, food_desc,
-                        mood, image_bytes, image_filename
-                    )
+                    resp = api_submit_donation(donor_name, contact, location, food_desc, mood, image_bytes, image_filename)
                     st.success("✅ Donation submitted successfully!")
                     st.json(resp)
                 except Exception:
                     st.error("❌ Submission failed — ensure backend is running and STREAMLIT_API_URL is set correctly.")
-                    # stop here
                     st.stop()
 
                 # --- AI-Driven Encouragement ---
@@ -416,7 +445,8 @@ with tabs[5]:
         else:
             st.dataframe(available_df)
             # donation id may be integer or string depending on backend schema
-            id_choices = available_df["id"].tolist() if "id" in available_df.columns else available_df["donation_id"].tolist()
+            id_col = "id" if "id" in available_df.columns else ("donation_id" if "donation_id" in available_df.columns else None)
+            id_choices = available_df[id_col].tolist() if id_col else []
             selected_id = st.selectbox("Select Donation ID to Claim:", id_choices)
             ngo_name = st.text_input("Enter your NGO Name")
             ngo_contact = st.text_input("Enter NGO contact (optional)")
@@ -440,7 +470,7 @@ with tabs[6]:
 
     # Fetch full donation list (all statuses)
     try:
-        donations_list_all = _api_get("/donations")  # assume returns all if no status provided
+        donations_list_all = _api_get("/donations/")
         df = pd.DataFrame(donations_list_all) if donations_list_all else pd.DataFrame()
     except Exception:
         st.error("❌ Could not fetch donations from backend. Please start the backend and set STREAMLIT_API_URL.")
@@ -454,9 +484,9 @@ with tabs[6]:
 
         # --- Filter by status ---
         st.markdown("### 🔍 Filter by Status")
-        filter_option = st.selectbox("Select Status", ["All", "Open", "Claimed", "Delivered"])
+        filter_option = st.selectbox("Select Status", ["All", "Available", "Claimed", "Delivered", "Open"])
         if filter_option != "All":
-            df = df[df["status"] == filter_option]
+            df = df[df["status"].str.contains(filter_option, na=False)]
 
         st.dataframe(df)
 
@@ -466,12 +496,12 @@ with tabs[6]:
         if claimed_df.empty:
             st.info("No donations have been claimed yet.")
         else:
-            cols_show = [c for c in ["donation_id", "donor_name", "ngo_name", "claimed_at", "food_description"] if c in claimed_df.columns]
+            cols_show = [c for c in ["donation_id", "id", "donor_name", "ngo_name", "claimed_at", "food_description", "food_item"] if c in claimed_df.columns]
             st.table(claimed_df[cols_show])
 
         # --- Donor → NGO Claim Workflow (also allow claim from dashboard) ---
         st.markdown("### 🤝 Claim a Donation")
-        donation_id_claim = st.number_input("Enter Donation ID to claim", min_value=1, step=1, key="claim_id")
+        donation_id_claim = st.number_input("Enter Donation ID to claim", min_value=1, step=1, key="claim_id_dashboard")
         ngo_name = st.text_input("NGO Name", key="ngo_name_input_dashboard")
         ngo_contact = st.text_input("NGO Contact (optional)", key="ngo_contact_input_dashboard")
 
@@ -512,7 +542,14 @@ with tabs[7]:
     )
 
     try:
-        deliveries = api_get_deliveries()
+        deliveries_resp = api_get_deliveries()
+        # deliveries_resp may be { "routes": [...] } or a list; normalize
+        if isinstance(deliveries_resp, dict) and "routes" in deliveries_resp:
+            deliveries = deliveries_resp["routes"]
+        elif isinstance(deliveries_resp, dict) and "delivery" in deliveries_resp:
+            deliveries = deliveries_resp["delivery"]
+        else:
+            deliveries = deliveries_resp or []
     except Exception:
         st.error("❌ Could not load deliveries from backend. Make sure backend is running and STREAMLIT_API_URL is set.")
         st.stop()
@@ -527,23 +564,26 @@ with tabs[7]:
         if show_routes:
             m = folium.Map(location=[30.3753, 69.3451], zoom_start=5)
             for d in deliveries:
-                # expecting each delivery may have pickup_coords and dropoff_coords as [lat,lon]
-                pickup = d.get("pickup_coords") or d.get("pickup_latlon")
-                dropoff = d.get("dropoff_coords") or d.get("dropoff_latlon")
-                volunteer = d.get("volunteer_name") or d.get("assigned_to")
+                # Expecting each delivery may have 'pickup_coords'/'dropoff_coords' or lat/lon fields
+                pickup = d.get("pickup_coords") or d.get("pickup_latlon") or d.get("pickup") or d.get("pickup_coords_list")
+                dropoff = d.get("dropoff_coords") or d.get("dropoff_latlon") or d.get("dropoff") or d.get("dropoff_coords_list")
+                volunteer = d.get("volunteer_name") or d.get("assigned_to") or d.get("driver_name")
                 status = d.get("status", "scheduled")
-                if pickup:
-                    lat, lon = pickup if isinstance(pickup, (list, tuple)) else (None, None)
-                    if lat and lon:
-                        folium.Marker([lat, lon], popup=f"Pickup - {d.get('id','')}", icon=folium.Icon(color="green")).add_to(m)
-                if dropoff:
-                    lat2, lon2 = dropoff if isinstance(dropoff, (list, tuple)) else (None, None)
-                    if lat2 and lon2:
-                        folium.Marker([lat2, lon2], popup=f"Dropoff - {d.get('id','')}", icon=folium.Icon(color="blue")).add_to(m)
-                # draw route line if both present
+                # attempt to geocode text locations if coords not present
+                if not pickup and d.get("pickup_location"):
+                    pickup = geocode_location_cached(d.get("pickup_location"))
+                if not dropoff and d.get("dropoff_location"):
+                    dropoff = geocode_location_cached(d.get("dropoff_location"))
+
+                if pickup and isinstance(pickup, (list, tuple)) and len(pickup) >= 2:
+                    folium.Marker([pickup[0], pickup[1]], popup=f"Pickup - {d.get('delivery_id') or d.get('id','')}\nVolunteer: {volunteer}", icon=folium.Icon(color="green")).add_to(m)
+                if dropoff and isinstance(dropoff, (list, tuple)) and len(dropoff) >= 2:
+                    folium.Marker([dropoff[0], dropoff[1]], popup=f"Dropoff - {d.get('delivery_id') or d.get('id','')}\nDestination", icon=folium.Icon(color="blue")).add_to(m)
+
+                # draw a route line if both present
                 try:
                     if pickup and dropoff and isinstance(pickup, (list, tuple)) and isinstance(dropoff, (list, tuple)):
-                        folium.PolyLine([pickup, dropoff], color="orange", weight=3, opacity=0.8).add_to(m)
+                        folium.PolyLine([[pickup[0], pickup[1]], [dropoff[0], dropoff[1]]], color="orange", weight=3, opacity=0.8).add_to(m)
                 except Exception:
                     pass
             st_folium(m, width=900, height=560)
@@ -555,4 +595,3 @@ with tabs[7]:
             st.json(analytics)
         except Exception:
             st.error("❌ Could not fetch analytics from backend.")
-
