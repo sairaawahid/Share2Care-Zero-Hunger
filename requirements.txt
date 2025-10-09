@@ -1,22 +1,53 @@
---only-binary=:all:
+# Core API Framework
+fastapi==0.110.2
+uvicorn==0.29.0
+pydantic==2.7.1
+python-multipart==0.0.9
+
+# Database + ORM
+sqlmodel==0.0.14
+sqlalchemy==2.0.29
+alembic==1.13.2
+psycopg2-binary
+geopandas
 streamlit
-pandas
-numpy==1.26.4
-scipy==1.11.4
-matplotlib
 folium
-streamlit-folium
-Pillow
-transformers
-torch
-torchvision
-scikit-learn
-geopandas==0.14.4
-shapely==2.0.4
-pyproj==3.6.1
-fiona==1.9.6
-rtree
-Cython==0.29.36
-pmdarima==2.0.4
+geopy
+passlib[bcrypt]
+
+# Machine Learning & AI
+torch==2.3.0
+transformers==4.39.3
+scikit-learn==1.4.2
+tensorflow==2.16.1
+numpy==1.26.4
+pandas==2.2.2
+pillow==10.3.0
+
+# Prophet Forecasting
+pystan==2.19.1.1
 prophet==1.1.5
-statsmodels==0.14.2
+
+# Visualization (optional but useful for analytics routes)
+matplotlib==3.9.0
+seaborn==0.13.2
+plotly==5.22.0
+
+# Image Classification (MobileNetV2)
+opencv-python==4.9.0.80
+
+# Sentiment & Psychology Modules
+nltk==3.8.1
+textblob==0.17.1
+
+# Utils and Middleware
+requests==2.32.2
+python-dotenv==1.0.1
+fastapi-cors==0.0.6
+joblib==1.4.0
+
+# For JSON & serialization
+orjson==3.10.3
+
+# Time and scheduling
+apscheduler==3.10.4
