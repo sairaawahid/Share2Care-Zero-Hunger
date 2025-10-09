@@ -1,6 +1,3 @@
-## 🧩 Share2Care – Zero Hunger  
-### Unified System Overview and Data Flow Diagram
-
 ```mermaid
 flowchart TD
     %% ============================================================
