@@ -68,44 +68,28 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     participant Donor
-    participant Frontend as Streamlit Frontend
-    participant API as FastAPI Backend
-    participant DB as PostgreSQL DB
-    participant NGO as NGO / Volunteer
+    participant Frontend
+    participant API
+    participant Database
+    participant NGO
 
-    %% 1. Donor Adds Donation
-    Donor->>Frontend: Fill Donation Form
+    Donor->>Frontend: Add Donation Details
     Frontend->>API: POST /api/donations
-    API->>DB: Insert Donation Record
-    DB-->>API: Donation Saved
-    API-->>Frontend: 201 Created (Donation ID)
-    Frontend-->>Donor: Confirmation + Map Update
-    API-->>NGO: Notify Available Donation
+    API->>Database: Save donation record
+    Database-->>API: Return donation ID
+    API-->>Frontend: Confirm submission
+    Frontend-->>Donor: Show "Donation Added" message
 
-    %% 2. NGO Claims Donation
-    NGO->>Frontend: Click "Claim Donation"
-    Frontend->>API: POST /api/delivery (claim_id, ngo_id)
-    API->>DB: Update Donation as Claimed
-    DB-->>API: Updated
-    API-->>Frontend: 200 OK (Claim Confirmed)
-    Frontend-->>NGO: Show "Delivery in Progress"
-    API-->>Donor: Notify Donation Claimed
+    NGO->>Frontend: View Available Donations
+    Frontend->>API: GET /api/donations
+    API->>Database: Fetch unclaimed donations
+    Database-->>API: Return donation list
+    API-->>Frontend: Send donation data
+    Frontend-->>NGO: Display donations map/list
 
-    %% 3. Delivery Completed
-    NGO->>Frontend: Mark as Delivered
-    Frontend->>API: PUT /api/delivery/{id}
-    API->>DB: Update Delivery Status
-    DB-->>API: Updated
-    API-->>Frontend: 200 OK
-    Frontend-->>Donor: Delivery Completed Notification
-
-    %% 4. Analytics & Insights
-    Admin->>Frontend: View Dashboard
-    Frontend->>API: GET /api/analytics
-    API->>DB: Query Donations & Deliveries
-    DB-->>API: Return Aggregated Data
-    API-->>Frontend: JSON Data
-    Frontend-->>Admin: Render Graphs & Maps
-
-
-
+    NGO->>Frontend: Claim Donation
+    Frontend->>API: PUT /api/donations/{id}/claim
+    API->>Database: Update status = "Claimed"
+    Database-->>API: Confirm update
+    API-->>Frontend: Notify claim success
+    Frontend-->>Donor: "Your donation has been claimed!"
