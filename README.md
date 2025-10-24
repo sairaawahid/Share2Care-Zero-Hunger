@@ -2,10 +2,32 @@
 
 ### A Smart Food Redistribution Platform  
 **Connecting surplus food donors with flood-affected communities across Pakistan** — powered by AI-driven insights to promote **UN SDG 2: Zero Hunger**.
+Share2Care – Zero Hunger is a lightweight humanitarian web application designed to connect surplus food donors (e.g., restaurants, households, NGOs) with flood-affected or food-insecure communities in Pakistan, while integrating AI-driven analytics, psychological support, and real-time food security visualization.
+
+The app visualizes real-time food needs and donation availability using interactive maps and dashboards, and integrates psychological features to promote empathy, volunteer motivation, and emotional well-being.
 
 ---
 
-## 🎯 1. Objectives
+## Project Overview
+
+**Share2Care – Zero Hunger** bridges the gap between *food surplus* and *scarcity* through an integrated platform where donors, NGOs and volunteers collaborate to deliver food efficiently and responsibly.
+
+Floods and disasters cause severe disruptions to food supply chains, leaving many without access to meals, while surplus food often goes wasted elsewhere. In flood-affected regions of Pakistan, food wastage coexists with severe hunger and logistical inefficiencies. Donors often have surplus food, but NGOs and local communities lack visibility and real-time coordination tools to allocate resources efficiently.
+
+**Current gap:**
+●	No centralized, user-friendly platform connects **donors**, **volunteers**, and **recipients** efficiently.
+●	Manual coordination leads to delays, duplication, and food spoilage.
+●	Psychological strain among both victims and volunteers often goes unaddressed.
+
+Share2Care solves these problems by:
+●	Enabling **real-time matching** of donors and recipients based on **location and food availability**.
+●	Providing **AI-driven analytics** to optimize routes and reduce waste.
+●	Offering **psychological well-being modules** (e.g., motivation, gratitude tracking, empathy prompts) for community health.
+
+
+---
+
+## Objectives
 
 | Goal | Description |
 |------|--------------|
@@ -17,33 +39,22 @@
 
 ---
 
-## 🌐 2. Project Overview
+## Key Features
 
-**Share2Care – Zero Hunger** bridges the gap between *food surplus* and *scarcity* through an integrated platform where donors, NGOs, and volunteers collaborate to deliver food efficiently and responsibly.
-
-This project was developed for the **GNEC Hackathon 2025 (Fall)** under the **SDG 2: Zero Hunger** theme.
-
----
-
-## ✨ 3. Key Features
-
-- 🥫 **Donation Management** – Add, view, and claim surplus food donations.  
-- 🗺️ **Community Mapping** – Real-time visualization of donation hotspots and NGO coverage.  
-- 🚚 **Delivery Tracking** – End-to-end monitoring from pickup to recipient.  
-- 🤖 **AI-Powered Modules:**  
+- **Donation Management** – Add, view, and claim surplus food donations.  
+- **Community Mapping** – Real-time visualization of donation hotspots and NGO coverage.  
+- **Delivery Tracking** – End-to-end monitoring from pickup to recipient.  
+- **AI-Powered Modules:**  
   - *DistilBERT Sentiment Analysis* – Understand user emotions and satisfaction.  
   - *Prophet/ARIMA Forecasting* – Predict food price trends and resource needs.  
   - *MobileNetV2 Food Recognition* – Automatically identify food items from images.  
   - *Behavioral Nudges* – Motivate consistent donor participation.  
-- 💬 **Mood Tracking** – Log donor/volunteer moods for mental well-being analysis.  
-- 📊 **Impact Analytics** – Monitor metrics like total food saved, communities served, and donor engagement.
+- **Mood Tracking** – Log donor/volunteer moods for mental well-being analysis.  
+- **Impact Analytics** – Monitor metrics like total food saved, communities served, and donor engagement.
 
 ---
 
-
----
-
-## 🧰 5. Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|-------------|
@@ -95,4 +106,4 @@ If you liked this project or want to collaborate on emotion-first AI tools, reac
 
 ---
 
-Developed with the purpose of reducing hunger, encouraging sustainability and demonstrating how technology can empower humanity at the GNEC Hackathon 2025 Fall.
+This project was developed for the **GNEC Hackathon 2025 (Fall)** under the **SDG 2: Zero Hunger** theme.
