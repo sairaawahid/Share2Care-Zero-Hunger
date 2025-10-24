@@ -106,7 +106,7 @@ If you use or adapt this app, please credit the developer(s) by linking to the o
 🔗 [https://github.com/sairaawahid/SentiMuse](https://github.com/sairaawahid/Share2Care-Zero-Hunger)
 
 ---
-If you liked this project or want to collaborate on emotion-first AI tools, reach out via LinkedIn or GitHub:
+If you liked this project or want to collaborate on human-centered AI, reach out via LinkedIn or GitHub:
 
 **Sairaaw →** [LinkedIn](https://www.linkedin.com/in/sairaabdulwahid/) or [GitHub](https://github.com/sairaawahid)
 
