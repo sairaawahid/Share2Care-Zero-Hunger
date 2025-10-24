@@ -1,20 +1,60 @@
 # Share2Care – Zero Hunger
 
-A lightweight, data-driven web app for Pakistan that:
-- Maps food-security needs (OCHA FSC + admin boundaries)
-- Enables surplus-food listings and claims
-- Adds a psychology layer (nudges, pledges, mood reflections)
-- **Optional AI**: food-image auto-tagging (MobileNet) + WFP food-price forecasting (Prophet/ARIMA/LSTM)
+### A Smart Food Redistribution Platform  
+**Connecting surplus food donors with flood-affected communities across Pakistan** — powered by AI-driven insights to promote **UN SDG 2: Zero Hunger**.
 
-## Tech
-Streamlit · (FastAPI optional) · Postgres/Supabase or SQLite · Folium/Leaflet · Transformers · Torch · Prophet/pmdarima
+---
 
-## Folders
-- `app/backend/` — APIs, data loaders, forecasting
-- `app/frontend/` — Streamlit UI
-- `app/data/` — raw/processed datasets (keep big files out of Git)
-- `app/models/` — lightweight models or metadata
-- `notebooks/` — exploration & preprocessing
+## 🎯 1. Objectives
+
+| Goal | Description |
+|------|--------------|
+| **Reduce Food Waste** | Redirect surplus food from donors to flood-affected and food-insecure communities. |
+| **Empower Local NGOs** | Enable NGOs to view, claim, and manage donations efficiently through real-time dashboards. |
+| **Promote Sustainable Giving** | Use AI-driven nudges to encourage consistent donor behavior. |
+| **Enhance Transparency** | Track every donation from pickup to delivery, ensuring accountability and impact visibility. |
+| **Leverage AI for Impact** | Apply ML models for sentiment, forecasting, and food recognition to optimize logistics and community engagement. |
+
+---
+
+## 🌐 2. Project Overview
+
+**Share2Care – Zero Hunger** bridges the gap between *food surplus* and *scarcity* through an integrated platform where donors, NGOs, and volunteers collaborate to deliver food efficiently and responsibly.
+
+This project was developed for the **GNEC Hackathon 2025 (Fall)** under the **SDG 2: Zero Hunger** theme.
+
+---
+
+## ✨ 3. Key Features
+
+- 🥫 **Donation Management** – Add, view, and claim surplus food donations.  
+- 🗺️ **Community Mapping** – Real-time visualization of donation hotspots and NGO coverage.  
+- 🚚 **Delivery Tracking** – End-to-end monitoring from pickup to recipient.  
+- 🤖 **AI-Powered Modules:**  
+  - *DistilBERT Sentiment Analysis* – Understand user emotions and satisfaction.  
+  - *Prophet/ARIMA Forecasting* – Predict food price trends and resource needs.  
+  - *MobileNetV2 Food Recognition* – Automatically identify food items from images.  
+  - *Behavioral Nudges* – Motivate consistent donor participation.  
+- 💬 **Mood Tracking** – Log donor/volunteer moods for mental well-being analysis.  
+- 📊 **Impact Analytics** – Monitor metrics like total food saved, communities served, and donor engagement.
+
+---
+
+
+---
+
+## 🧰 5. Tech Stack
+
+| Layer | Technology |
+|-------|-------------|
+| **Backend** | FastAPI, SQLite / PostgreSQL |
+| **Frontend** | Streamlit |
+| **AI/ML Models** | DistilBERT, Prophet, ARIMA, MobileNetV2 |
+| **Visualization** | Folium, Plotly |
+| **Authentication** | JWT |
+| **Environment** | Python 3.11, Uvicorn, SQLAlchemy, Pydantic |
+
+---
 
 ## Repo Structure
 ```bash
@@ -47,5 +87,12 @@ app/
       ├── prepare_core.py
       ├── check_wfp.py
 ```
-## Hackathon
-GNEC Hackathon 2025 Fall — SDG 2 (Zero Hunger)
+---
+
+If you liked this project or want to collaborate on emotion-first AI tools, reach out via LinkedIn or GitHub:
+
+**Sairaaw →** [LinkedIn](https://www.linkedin.com/in/sairaabdulwahid/) or [GitHub](https://github.com/sairaawahid)
+
+---
+
+Developed with the purpose of reducing hunger, encouraging sustainability and demonstrating how technology can empower humanity at the GNEC Hackathon 2025 Fall.
