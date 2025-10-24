@@ -100,7 +100,16 @@ app/
       ├── check_wfp.py
 ```
 ---
+## Attribution
+Share2Care was collaboratively developed by:
+- [Sairaaw](https://www.linkedin.com/in/sairaabdulwahid/) (Backend Development, AI/ML Engineering)
 
+We built this together to reduce hunger, encourage sustainability and demonstrate how technology can empower humanity.✨
+
+If you use or adapt this app, please credit the developer(s) by linking to the original GitHub repository:
+🔗 [https://github.com/sairaawahid/SentiMuse](https://github.com/sairaawahid/Share2Care-Zero-Hunger)
+
+---
 If you liked this project or want to collaborate on emotion-first AI tools, reach out via LinkedIn or GitHub:
 
 **Sairaaw →** [LinkedIn](https://www.linkedin.com/in/sairaabdulwahid/) or [GitHub](https://github.com/sairaawahid)
