@@ -16,14 +16,14 @@ The app visualizes real-time food needs and donation availability using interact
 Floods and disasters cause severe disruptions to food supply chains, leaving many without access to meals, while surplus food often goes wasted elsewhere. In flood-affected regions of Pakistan, food wastage coexists with severe hunger and logistical inefficiencies. Donors often have surplus food, but NGOs and local communities lack visibility and real-time coordination tools to allocate resources efficiently.
 
 **Current gap:**
-●	No centralized, user-friendly platform connects **donors**, **volunteers**, and **recipients** efficiently.
-●	Manual coordination leads to delays, duplication, and food spoilage.
-●	Psychological strain among both victims and volunteers often goes unaddressed.
+-	No centralized, user-friendly platform connects **donors**, **volunteers**, and **recipients** efficiently.
+-	Manual coordination leads to delays, duplication, and food spoilage.
+-	Psychological strain among both victims and volunteers often goes unaddressed.
 
 Share2Care solves these problems by:
-●	Enabling **real-time matching** of donors and recipients based on **location and food availability**.
-●	Providing **AI-driven analytics** to optimize routes and reduce waste.
-●	Offering **psychological well-being modules** (e.g., motivation, gratitude tracking, empathy prompts) for community health.
+-	Enabling **real-time matching** of donors and recipients based on **location and food availability**.
+-	Providing **AI-driven analytics** to optimize routes and reduce waste.
+-	Offering **psychological well-being modules** (e.g., motivation, gratitude tracking, empathy prompts) for community health.
 
 
 ---
