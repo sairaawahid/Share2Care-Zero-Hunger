@@ -8,7 +8,6 @@
 The app visualizes real-time food needs and donation availability using interactive maps and dashboards and integrates psychological features to promote empathy, volunteer motivation and emotional well-being.
 
 ---
-
 ## Project Overview
 
 **Share2Care – Zero Hunger** bridges the gap between *food surplus* and *scarcity* through an integrated platform where donors, NGOs and volunteers collaborate to deliver food efficiently and responsibly.
@@ -26,7 +25,6 @@ Share2Care solves these problems by:
 -	Offering **psychological well-being modules** (e.g., motivation, gratitude tracking, empathy prompts) for community health.
 
 ---
-
 ## Objectives
 
 | Goal | Description |
@@ -38,7 +36,6 @@ Share2Care solves these problems by:
 | **Leverage AI for Impact** | Apply ML models for sentiment, forecasting, and food recognition to optimize logistics and community engagement. |
 
 ---
-
 ## Key Features
 
 - **Donation Management** – Add, view, and claim surplus food donations.  
