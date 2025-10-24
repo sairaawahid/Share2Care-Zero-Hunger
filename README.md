@@ -3,7 +3,7 @@
 ### A Smart Food Redistribution Platform  
 **Connecting surplus food donors with flood-affected communities across Pakistan** — powered by AI-driven insights to promote **UN SDG 2: Zero Hunger**.
 
-Share2Care – Zero Hunger is a lightweight humanitarian web application designed to connect surplus food donors with flood-affected or food-insecure communities in Pakistan, while integrating AI-driven analytics, psychological support and real-time food security visualization.
+**Share2Care – Zero Hunger** is a lightweight humanitarian web application designed to connect surplus food donors with flood-affected or food-insecure communities in Pakistan, while integrating AI-driven analytics, psychological support and real-time food security visualization.
 
 The app visualizes real-time food needs and donation availability using interactive maps and dashboards and integrates psychological features to promote empathy, volunteer motivation and emotional well-being.
 
