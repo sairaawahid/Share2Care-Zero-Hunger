@@ -25,7 +25,6 @@ Share2Care solves these problems by:
 -	Providing **AI-driven analytics** to optimize routes and reduce waste.
 -	Offering **psychological well-being modules** (e.g., motivation, gratitude tracking, empathy prompts) for community health.
 
-
 ---
 
 ## Objectives
